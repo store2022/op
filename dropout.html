@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.4.3/css/foundation.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/2.2.1/css/dataTables.foundation.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/responsive/3.0.3/css/responsive.foundation.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/2.2.1/css/dataTables.jqueryui.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/searchpanes/2.3.3/css/searchPanes.jqueryui.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/select/3.0.0/css/select.jqueryui.css"
+    />
+    <style>
+      body {
+        background-color: #f8f9fa;
+
+        padding: 0;
+
+        margin: 0;
+
+        min-height: 100vh;
+      }
+      .container {
+    padding-top: 20px;
+}
+      .button-container {
+        text-align: center;
+        margin: 20px 0;
+      }
+      .toggle-button {
+        padding: 10px 20px;
+        margin: 0 10px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #f0f0f0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      .toggle-button.active {
+        background-color: #4caf50;
+        color: white;
+      }
+      .table-section {
+        display: none;
+      }
+      .table-section.active {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="container-fluid p-4">
+        <div class="button-container">
+          <button class="toggle-button active" data-target="emSection">
+            EM
+          </button>
+          <button class="toggle-button" data-target="packOutSection">
+            PackOut
+          </button>
+          <button class="toggle-button" data-target="addDatatSection">
+            เพิ่ข้อมูล
+          </button>
+        </div>
+
+        <div id="emSection" class="table-section active">
+          <h2>EM Data</h2>
+          <table id="emTable" class="display nowrap" style="width: 100%">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Status</th>
+                <th>Title</th>
+                <th>Grade</th>
+                <th>Weight</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>DropOutBy</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div id="packOutSection" class="table-section">
+          <h2>Pack-Out Data</h2>
+          <table id="packOutTable" class="display nowrap" style="width: 100%">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Status</th>
+                <th>Title</th>
+                <th>Weight</th>
+                <th>Grade</th>
+                <th>Cause</th>
+                <th>Form</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>PackOutBy</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div id="addDatatSection" class="table-section">
+          <h2>Add Data</h2>
+          <iframe
+            width="940px"
+            height="680px"
+            src="https://forms.office.com/Pages/ResponsePage.aspx?id=aziq7N_I4EytAXQMvbW6VbTK8rk4lLlNsajOJYJwUAdUMTlNRkMxWlRaUlY1TldLWUwwNVBaSEI1TSQlQCN0PWcu&embed=true"
+            frameborder="0"
+            marginwidth="0"
+            marginheight="0"
+            style="border: none; max-width: 100%; max-height: 100vh"
+            allowfullscreen
+            webkitallowfullscreen
+            mozallowfullscreen
+            msallowfullscreen
+          >
+          </iframe>
+        </div>
+      </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.4.3/js/foundation.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.4.3/js/foundation.min.js"></script>
+    <script src="https://cdn.datatables.net/2.2.1/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/2.2.1/js/dataTables.foundation.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.3/js/dataTables.responsive.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.3/js/responsive.foundation.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+    <script src="https://cdn.datatables.net/2.2.1/js/dataTables.jqueryui.js"></script>
+    <script src="https://cdn.datatables.net/searchpanes/2.3.3/js/dataTables.searchPanes.js"></script>
+    <script src="https://cdn.datatables.net/searchpanes/2.3.3/js/searchPanes.jqueryui.js"></script>
+    <script src="https://cdn.datatables.net/select/3.0.0/js/dataTables.select.js"></script>
+    <script src="https://cdn.datatables.net/select/3.0.0/js/select.jqueryui.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <!-- <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script> -->
+    <script>
+      // Fetch data from API
+      async function fetchData() {
+        const url =
+          "https://script.google.com/macros/s/AKfycbzoR-0HS2H3e4kTQZ-LPBHOo1jriiM3I2j8bCLplNJdGZzUtcHogdEX2H9yei6X4Q4fgg/exec";
+
+        try {
+          const response = await fetch(url);
+          const data = await response.json();
+          populateEMTable(data.EM);
+          populatePackOutTable(data["Pack-Out"]);
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        }
+      }
+
+      // Toggle button functionality
+      document.querySelectorAll(".toggle-button").forEach((button) => {
+        button.addEventListener("click", () => {
+          // Remove active class from all buttons and sections
+          document
+            .querySelectorAll(".toggle-button")
+            .forEach((btn) => btn.classList.remove("active"));
+          document
+            .querySelectorAll(".table-section")
+            .forEach((section) => section.classList.remove("active"));
+
+          // Add active class to clicked button and its target section
+          button.classList.add("active");
+          document
+            .getElementById(button.dataset.target)
+            .classList.add("active");
+        });
+      });
+
+      // Populate EM DataTable
+      function populateEMTable(data) {
+        const tableData = data.map((item) => [
+          item.ID,
+          item.Status,
+          item.Title,
+          item.Grade,
+          item.Weight,
+          item.Date || "-",
+          item.Time || "-",
+          item.DropOutBy || "-",
+          item.Note || "-",
+          `<a href="https://forms.office.com/Pages/ResponsePage.aspx?id=aziq7N_I4EytAXQMvbW6VbTK8rk4lLlNsajOJYJwUAdUMTlNRkMxWlRaUlY1TldLWUwwNVBaSEI1TSQlQCN0PWcu&rff9943292d0449e58fdff75ef36b58a5=Fill-in EM&r7305a2c3cf5a4f16ae9a40b7ba0877fb=${
+            item.Grade
+          }&ra152923085364d5a87f9f079cb3f8323=${item.Title.slice(
+            -3
+          )}&r9d8fb32173894ee2ac8dbe7aef0a321c=${
+            item.Weight
+          }&r8ba4f3f69f874b2ab265331095b53851=${
+            item.Date
+          }" class="btn btn-primary btn-sm" target="_blank">Fill-in</a>`,
+        ]);
+
+        $("#emTable").DataTable({
+          data: tableData,
+          responsive: {
+            details: {
+              display: DataTable.Responsive.display.modal({
+                header: function (row) {
+                  var data = row.data();
+                  return "[EM] " + data[2];
+                },
+              }),
+              renderer: DataTable.Responsive.renderer.tableAll({
+                tableClass: "table",
+              }),
+            },
+          },
+          lengthMenu: [
+            [25, 50, 100, -1],
+            [25, 50, 100, "All"],
+          ],
+          language: {
+            url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/th.json",
+          },
+          fixedHeader: true,
+          searchPanes: {
+            columns: [3],
+          },
+          dom: "Plfrtip",
+          columns: [
+            { title: "ID" },
+            { title: "Status" },
+            { title: "Title" },
+            { title: "Grade" },
+            { title: "Weight" },
+            { title: "Date" },
+            { title: "Time" },
+            { title: "DropOutBy" },
+            { title: "Note" },
+            { title: "Action" },
+          ],
+        });
+      }
+
+      // Populate Pack-Out DataTable
+      function populatePackOutTable(data) {
+        const tableData = data.map((item) => [
+          item.ID,
+          item.Status,
+          item.Title,
+          item.Weight,
+          item.Grade,
+          item.Cause || "-",
+          item.Form || "-",
+          item.Date || "-",
+          item.Time || "-",
+          item.PackOutBy || "-",
+          item.Note || "-",
+          `<a href="https://forms.office.com/Pages/ResponsePage.aspx?id=aziq7N_I4EytAXQMvbW6VbTK8rk4lLlNsajOJYJwUAdUMTlNRkMxWlRaUlY1TldLWUwwNVBaSEI1TSQlQCN0PWcu&rff9943292d0449e58fdff75ef36b58a5=Fill in Product Pack-out&r83c613620c464bf78143c7721d068125=${
+            item.Grade
+          }&r1b10f3cdaeec4c73bb292a00f6608f96=${item.Title.slice(
+            -3
+          )}&r03fe84f00e7c4e94994408ef893110d3=${
+            item.Weight
+          }&ra6897d52072c47169fb2ef05721ebbd1=${
+            item.Date
+          }" class="btn btn-primary btn-sm" target="_blank">Fill-in</a>`,
+        ]);
+
+        $("#packOutTable").DataTable({
+          data: tableData,
+          responsive: {
+            details: {
+              display: DataTable.Responsive.display.modal({
+                header: function (row) {
+                  var data = row.data();
+                  return "[PackOut] " + data[2];
+                },
+              }),
+              renderer: DataTable.Responsive.renderer.tableAll({
+                tableClass: "table",
+              }),
+            },
+          },
+          lengthMenu: [
+            [25, 50, 100, -1],
+            [25, 50, 100, "All"],
+          ],
+          language: {
+            url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/th.json",
+          },
+          fixedHeader: true,
+          searchPanes: {
+            columns: [4, 5],
+          },
+          dom: "Plfrtip",
+          columns: [
+            { title: "ID" },
+            { title: "Status" },
+            { title: "Title" },
+            { title: "Weight" },
+            { title: "Grade" },
+            { title: "Cause" },
+            { title: "Form" },
+            { title: "Date" },
+            { title: "Time" },
+            { title: "PackOutBy" },
+            { title: "Note" },
+            { title: "Action" },
+          ],
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", fetchData);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบแจ้งทำความสะอาด 5S</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        .img-preview img { max-width: 150px; border: 1px solid #ccc; }
+        .image-gallery { position: relative; display: inline-block; }
+        .image-count { position: absolute; bottom: 0; right: 0; background: rgba(0,0,0,0.7); color: white; padding: 2px 6px; border-radius: 3px; font-size: 12px; }
+        .badge-urgent { background-color: #dc3545; }
+        .badge-normal { background-color: #28a745; }
+        .preview-image { max-height: 200px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h2 class="text-center mb-4">ระบบแจ้งทำความสะอาด 5S</h2>
+        <div class="d-flex justify-content-end mb-2">
+            <button id="btn-add" class="btn btn-primary">เพิ่มรายการใหม่</button>
+        </div>
+        <table id="data-table" class="display responsive nowrap" width="100%">
+            <thead>
+                <tr>
+                    <th>รูปภาพ</th>
+                    <th>สถานะ</th>
+                    <th>พื้นที่</th>
+                    <th>ปัญหา</th>
+                    <th>ประเภท</th>
+                    <th>ความเร่งด่วน</th>
+                    <th>วันที่แจ้ง</th>
+                    <th>การจัดการ</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+
+    <!-- Modal Templates -->
+   <template id="modal-template">
+    <div class="modal fade" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"></h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <!-- เพิ่ม container สำหรับใส่เนื้อหา -->
+                    <div class="modal-body-content"></div>
+                </div>
+                <div class="modal-footer"></div>
+            </div>
+        </div>
+    </div>
+</template>
+
+    <!-- เพิ่ม Template สำหรับ Modal ต่างๆ -->
+<template id="modal-audit">
+    <form id="form-audit">
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label>พื้นที่ *</label>
+                <input type="text" class="form-control" name="Area" required>
+            </div>
+            <div class="form-group col-md-6">
+                <label>ประเภท *</label>
+                <select class="form-control" name="Type" required>
+                    <option value="">เลือกประเภท</option>
+                    <option value="ทำความสะอาด">ทำความสะอาด</option>
+                    <option value="จัดระเบียบ">จัดระเบียบ</option>
+                    <option value="ซ่อมแซม">ซ่อมแซม</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-12">
+                <label>รายละเอียดปัญหา *</label>
+                <textarea class="form-control" name="Title" required></textarea>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-12">
+                <label>การปรับปรุง</label>
+                <textarea class="form-control" name="Improve"></textarea>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label>ความเร่งด่วน *</label>
+                <select class="form-control" name="urgency" required>
+                    <option value="normal">ปกติ</option>
+                    <option value="urgent">เร่งด่วน</option>
+                </select>
+            </div>
+            <div class="form-group col-md-6">
+                <label>ผู้แจ้ง *</label>
+                <input type="text" class="form-control" name="Sign" required>
+            </div>
+        </div>
+        <div id="image-upload-section" class="mt-3">
+            <label>รูปภาพ (สูงสุด 4 รูป)</label>
+            <div id="image-preview-container" class="d-flex flex-wrap"></div>
+            <button type="button" id="add-image" class="btn btn-secondary mt-2">
+                <i class="fas fa-plus"></i> เพิ่มรูปภาพ
+            </button>
+        </div>
+    </form>
+</template>
+  
+    <template id="info-section-template">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <h6 class="border-bottom pb-2"></h6>
+                <table class="table table-sm"></table>
+            </div>
+        </div>
+    </template>
+
+    <template id="image-section-template">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <h6 class="border-bottom pb-2"></h6>
+                <div class="d-flex flex-wrap"></div>
+            </div>
+        </div>
+    </template>
+
+    <template id="modal-improve">
+        <form id="form-improve">
+            <input type="hidden" name="refer_5s_audit" id="refer_5s_audit">
+            <div id="improve-info"></div>
+            <div id="improve-images"></div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label>ผู้รับผิดชอบ *</label>
+                    <input type="text" class="form-control" name="responsible" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label>กำหนดเสร็จ *</label>
+                    <input type="date" class="form-control" name="Due_date" required>
+                </div>
+            </div>
+        </form>
+    </template>
+
+    <template id="modal-update">
+        <form id="form-update">
+            <input type="hidden" name="refer_5s_audit" id="update_refer_5s_audit">
+            <input type="hidden" name="refer_5s_improve" id="update_refer_5s_improve">
+            <div id="update-info"></div>
+            <div id="update-images"></div>
+            <div id="update-form">
+                <div id="image-upload-section" class="mt-3">
+                    <label>รูปภาพหลังดำเนินการ (สูงสุด 4 รูป)</label>
+                    <div id="update-image-preview" class="d-flex flex-wrap"></div>
+                    <button type="button" id="add-update-image" class="btn btn-secondary mt-2">
+                        <i class="fas fa-plus"></i> เพิ่มรูปภาพ
+                    </button>
+                </div>
+                <div class="form-group mt-3">
+                    <label>หมายเหตุการดำเนินการ</label>
+                    <textarea class="form-control" name="note"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>ผู้บันทึก *</label>
+                    <input type="text" class="form-control" name="Sign" required>
+                </div>
+            </div>
+        </form>
+    </template>
+
+    <template id="modal-check">
+        <div class="row">
+            <div class="col-md-6">
+                <div id="check-audit-info"></div>
+            </div>
+            <div class="col-md-6">
+                <div id="check-improve-info"></div>
+            </div>
+            <div class="col-md-12">
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">รูปก่อนดำเนินการ</h6>
+                        <div id="check-before-images" class="d-flex flex-wrap"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">รูปหลังดำเนินการ</h6>
+                        <div id="check-after-images" class="d-flex flex-wrap"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Custom Scripts -->
+    <script src="js/5sAudit.js"></script>
+</body>
+</html>

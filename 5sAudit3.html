@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบแจ้งทำความสะอาด 5S</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <style>
+      body {
+    padding: 0;
+    margin: 0;
+    min-height: 100vh;
+}
+
+.container {
+    padding-top: 20px;
+}
+        .img-preview {
+            position: relative;
+            display: inline-block;
+            margin: 5px;
+        }
+        .img-preview img {
+            max-width: 150px;
+            border: 1px solid #ccc;
+        }
+        .remove-image {
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+        .image-gallery {
+            position: relative;
+            display: inline-block;
+        }
+        .image-count {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .badge-urgent {
+            background-color: #dc3545;
+            color: white;
+        }
+        .badge-normal {
+            background-color: #28a745;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="text-center mb-4">
+            <h2>ระบบแจ้งทำความสะอาด 5S</h2>
+        </div>
+
+        <!-- ปุ่มเพิ่มข้อมูล -->
+        <div class="d-flex justify-content-end mb-2">
+            <button id="btn-add" class="btn btn-primary">เพิ่มรายการใหม่</button>
+        </div>
+
+        <!-- ตารางแสดงข้อมูล -->
+        <table id="data-table" class="display responsive nowrap" width="100%">
+            <thead>
+                <tr>
+                    <th>รูปภาพ</th>
+                    <th>สถานะ</th>
+                    <th>พื้นที่</th>
+                    <th>ปัญหา</th>
+                    <th>ประเภท</th>
+                    <th>ความเร่งด่วน</th>
+                    <th>วันที่แจ้ง</th>
+                    <th>การจัดการ</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+
+<!-- Modal Details -->
+<div class="modal fade" id="modal-details" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">รายละเอียด</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- ข้อมูลการแจ้ง -->
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">ข้อมูลการแจ้ง</h6>
+                        <table class="table table-sm">
+                            <tr><th width="30%">พื้นที่:</th><td id="detail-area"></td></tr>
+                            <tr><th>ประเภท:</th><td id="detail-type"></td></tr>
+                            <tr><th>รายละเอียดปัญหา:</th><td id="detail-title"></td></tr>
+                            <tr><th>การปรับปรุง:</th><td id="detail-improve"></td></tr>
+                            <tr><th>ความเร่งด่วน:</th><td id="detail-urgency"></td></tr>
+                            <tr><th>ผู้แจ้ง:</th><td id="detail-reporter"></td></tr>
+                            <tr><th>วันที่แจ้ง:</th><td id="detail-date"></td></tr>
+                            <tr><th>สถานะ:</th><td id="detail-status"></td></tr>
+                        </table>
+                    </div>
+                    <!-- ข้อมูลการดำเนินการ -->
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">ข้อมูลการดำเนินการ</h6>
+                        <table class="table table-sm">
+                            <tr><th width="30%">ผู้รับผิดชอบ:</th><td id="detail-responsible"></td></tr>
+                            <tr><th>กำหนดเสร็จ:</th><td id="detail-due-date"></td></tr>
+                            <tr><th>หมายเหตุ:</th><td id="detail-note"></td></tr>
+                            <tr><th>ผู้บันทึก:</th><td id="detail-sign"></td></tr>
+                            <tr><th>วันที่เสร็จ:</th><td id="detail-complete-date"></td></tr>
+                        </table>
+                    </div>
+                </div>
+                <!-- รูปภาพ -->
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">รูปก่อนดำเนินการ</h6>
+                        <div id="detail-before-images" class="d-flex flex-wrap"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">รูปหลังดำเนินการ</h6>
+                        <div id="detail-after-images" class="d-flex flex-wrap"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">ปิด</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Modal เพิ่มข้อมูล 5S Audit -->
+    <div class="modal fade" id="modal-audit" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <form id="form-audit">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">บันทึกแจ้งทำความสะอาด 5S</h5>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+<!-- ปุ่มยุบขยายแสดงพื้นที่รับผิดชอบ -->
+<div class="text-right">
+    <button class="btn btn-info mt-2" type="button" data-toggle="collapse" data-target="#areaInfo" aria-expanded="false" aria-controls="areaInfo">
+        แสดงพื้นที่รับผิดชอบ
+    </button>
+</div>
+
+<!-- ข้อมูลพื้นที่รับผิดชอบ -->
+<div class="collapse mt-2" id="areaInfo">
+    <div class="card card-body">
+        <strong>Shift A</strong>
+        <ul>
+            <li>EM and Crusher mil room</li>
+            <li>Cooling screw area</li>
+            <li>Coating room</li>
+            <li>Initiator room</li>
+            <li>Corridor</li>
+            <li>Mixtank room</li>
+            <li>Wash room</li>
+            <li>Scrubber area</li>
+            <li>AA unloading and AA tank fram B-1000, B1008</li>
+            <li>NaOH and PG unloading / NaOH and PG tank fram</li>
+            <li>Premix NaOH tank fram B-1002</li>
+            <li>Recycle unloading and Recycle tank fram B-1007</li>
+        </ul>
+        
+        <strong>Shift B</strong>
+        <ul>
+            <li>Band dryer and Oscillator area</li>
+            <li>Mix tank floor 2 area</li>
+            <li>Extruder area</li>
+            <li>FN-1901 and V-1940 area</li>
+            <li>Surge tank and roller mill area</li>
+            <li>Disc dryer area and flash tank</li>
+            <li>MX-1060 schugi area</li>
+            <li>Moisture reintroduction MX-1061 area</li>
+            <li>shelf วางของ floor 2</li>
+        </ul>
+        
+        <strong>Shift C</strong>
+        <ul>
+            <li>Polybelt and Photo initiator / X-link pump area</li>
+            <li>Platform TH-1170 , FN-1902</li>
+            <li>Dehumidifier DH-1901</li>
+            <li>Trim step platform</li>
+            <li>BH-1080 , FD-1061 , FD-1062 , PC-1064 area</li>
+            <li>FD-1060 and PC-1060 area</li>
+            <li>shelf วางของ floor 3</li>
+        </ul>
+        
+        <strong>Shift D</strong>
+        <ul>
+            <li>Sifter screen and BH-1001 area</li>
+            <li>BH-1060 , BH-1064 , BH-1080.1 , BH-1084 area</li>
+            <li>Vibra-D and SC-1110 area</li>
+            <li>BH-1101 , BH-1102 , BH-1111 platform</li>
+            <li>Scrap area of production</li>
+            <li>Control room & ห้องเก็บอุปกรณ์</li>
+        </ul>
+    </div>
+</div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>พื้นที่ *</label>
+                                <input type="text" class="form-control" name="Area" required>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>ประเภท *</label>
+                                <select class="form-control" name="Type" id="typeSelect" required>
+                                    <option value="">เลือกประเภท</option>
+                                    <option value="ทำความสะอาด">ทำความสะอาด</option>
+                                    <option value="จัดระเบียบ">จัดระเบียบ</option>
+                                    <option value="ทาสี">ทาสี</option>
+                                    <option value="ติดป้าย">ติดป้าย</option>
+                                    <option value="ซ่อมแซม">ซ่อมแซม</option>
+                                </select>
+                              <!-- ปุ่มแจ้งซ่อม -->
+<div class="text-right mt-2" id="repairButtonContainer" style="display: none;">
+    <a href="https://store-op.glitch.me/Notification.html" target="_blank" class="btn btn-danger">แจ้งซ่อม</a>
+</div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-12">
+                                <label>รายละเอียดปัญหา *</label>
+                                <textarea class="form-control" name="Title" required></textarea>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-12">
+                                <label>การปรับปรุง</label>
+                                <textarea class="form-control" name="Improve"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>ความเร่งด่วน *</label>
+                                <select class="form-control" name="urgency" required>
+                                    <option value="normal">ปกติ</option>
+                                    <option value="urgent">เร่งด่วน</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>ผู้แจ้ง *</label>
+                                <input type="text" class="form-control" name="Sign" required>
+                            </div>
+                        </div>
+                        <!-- Image upload section -->
+                        <div id="image-upload-section" class="mt-3">
+                            <label>รูปภาพ (สูงสุด 4 รูป)</label>
+                            <div id="image-preview-container" class="d-flex flex-wrap"></div>
+                            <button type="button" id="add-image" class="btn btn-secondary mt-2">
+                                <i class="fas fa-plus"></i> เพิ่มรูปภาพ
+                            </button>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
+                        <button type="submit" class="btn btn-primary">บันทึก</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Improve -->
+<div class="modal fade" id="modal-improve" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <form id="form-improve">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">ข้อมูลการดำเนินการ</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" name="refer_5s_audit" id="refer_5s_audit">
+                    
+                    <!-- ข้อมูลการแจ้ง -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <h6 class="border-bottom pb-2">ข้อมูลการแจ้ง</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th width="20%">พื้นที่:</th>
+                                    <td id="improve-area"></td>
+                                </tr>
+                                <tr>
+                                    <th>ประเภท:</th>
+                                    <td id="improve-type"></td>
+                                </tr>
+                                <tr>
+                                    <th>รายละเอียดปัญหา:</th>
+                                    <td id="improve-title"></td>
+                                </tr>
+                                <tr>
+                                    <th>การปรับปรุง:</th>
+                                    <td id="improve-description"></td>
+                                </tr>
+                                <tr>
+                                    <th>ความเร่งด่วน:</th>
+                                    <td id="improve-urgency"></td>
+                                </tr>
+                                <tr>
+                                    <th>ผู้แจ้ง:</th>
+                                    <td id="improve-reporter"></td>
+                                </tr>
+                                <tr>
+                                    <th>วันที่แจ้ง:</th>
+                                    <td id="improve-date"></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- รูปภาพที่แจ้ง -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <h6 class="border-bottom pb-2">รูปภาพที่แจ้ง</h6>
+                            <div id="improve-images" class="d-flex flex-wrap"></div>
+                        </div>
+                    </div>
+
+                    <!-- ฟอร์มบันทึกการปรับปรุง -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h6 class="border-bottom pb-2">กำหนดผู้รับผิดชอบ</h6>
+                            <div class="row">
+                                <div class="form-group col-md-6">
+                                    <label>ผู้รับผิดชอบ *</label>
+                                    <input type="text" class="form-control" name="responsible" required>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>กำหนดเสร็จ *</label>
+                                    <input type="date" class="form-control" name="Due_date" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary">บันทึก</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+    <!-- Modal Check -->
+<div class="modal fade" id="modal-check" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ตรวจสอบงาน</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- ข้อมูลการแจ้ง -->
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">ข้อมูลการแจ้ง</h6>
+                        <table class="table table-sm">
+                            <tr><th width="30%">พื้นที่:</th><td id="check-area"></td></tr>
+                            <tr><th>ประเภท:</th><td id="check-type"></td></tr>
+                            <tr><th>รายละเอียดปัญหา:</th><td id="check-title"></td></tr>
+                            <tr><th>การปรับปรุง:</th><td id="check-improve"></td></tr>
+                            <tr><th>ความเร่งด่วน:</th><td id="check-urgency"></td></tr>
+                            <tr><th>ผู้แจ้ง:</th><td id="check-reporter"></td></tr>
+                            <tr><th>วันที่แจ้ง:</th><td id="check-date"></td></tr>
+                        </table>
+                    </div>
+                    <!-- ข้อมูลการดำเนินการ -->
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">ข้อมูลการดำเนินการ</h6>
+                        <table class="table table-sm">
+                            <tr><th width="30%">ผู้รับผิดชอบ:</th><td id="check-responsible"></td></tr>
+                            <tr><th>กำหนดเสร็จ:</th><td id="check-due-date"></td></tr>
+                            <tr><th>หมายเหตุ:</th><td id="check-note"></td></tr>
+                        </table>
+                    </div>
+                </div>
+                <!-- รูปภาพ -->
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">รูปก่อนดำเนินการ</h6>
+                        <div id="check-before-images" class="d-flex flex-wrap"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="border-bottom pb-2">รูปหลังดำเนินการ</h6>
+                        <div id="check-after-images" class="d-flex flex-wrap"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">ปิด</button>
+                <button type="button" class="btn btn-danger" id="btn-reject">ไม่ผ่าน</button>
+                <button type="button" class="btn btn-success" id="btn-approve">ผ่าน</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Update -->
+    <div class="modal fade" id="modal-update" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <form id="form-update">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">อัพเดทสถานะงาน</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="refer_5s_audit" id="update_refer_5s_audit">
+                    <input type="hidden" name="refer_5s_improve" id="update_refer_5s_improve">
+
+                    <!-- ข้อมูลการแจ้ง -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <h6 class="border-bottom pb-2">ข้อมูลการแจ้ง</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th width="20%">พื้นที่:</th>
+                                    <td id="update-area"></td>
+                                </tr>
+                                <tr>
+                                    <th>ประเภท:</th>
+                                    <td id="update-type"></td>
+                                </tr>
+                                <tr>
+                                    <th>รายละเอียดปัญหา:</th>
+                                    <td id="update-title"></td>
+                                </tr>
+                                <tr>
+                                    <th>การปรับปรุง:</th>
+                                    <td id="update-improve"></td>
+                                </tr>
+                                <tr>
+                                    <th>ความเร่งด่วน:</th>
+                                    <td id="update-urgency"></td>
+                                </tr>
+                                <tr>
+                                    <th>ผู้แจ้ง:</th>
+                                    <td id="update-reporter"></td>
+                                </tr>
+                                <tr>
+                                    <th>วันที่แจ้ง:</th>
+                                    <td id="update-date"></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- ข้อมูลการดำเนินการ -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <h6 class="border-bottom pb-2">ข้อมูลการดำเนินการ</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th width="20%">ผู้รับผิดชอบ:</th>
+                                    <td id="update-responsible"></td>
+                                </tr>
+                                <tr>
+                                    <th>กำหนดเสร็จ:</th>
+                                    <td id="update-due-date"></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- รูปภาพที่แจ้ง -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <h6 class="border-bottom pb-2">รูปภาพที่แจ้ง</h6>
+                            <div id="update-notify-images" class="d-flex flex-wrap"></div>
+                        </div>
+                    </div>
+
+                    <!-- อัพเดทสถานะ -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <h6 class="border-bottom pb-2">อัพเดทสถานะ</h6>
+                            
+                            <!-- ส่วนอัพโหลดรูปภาพ -->
+                            <div id="update-image-section" class="mt-3">
+                                <label>รูปภาพหลังดำเนินการ (สูงสุด 4 รูป)</label>
+                                <div id="update-image-preview" class="d-flex flex-wrap"></div>
+                                <button type="button" id="add-update-image" class="btn btn-secondary mt-2">
+                                    <i class="fas fa-plus"></i> เพิ่มรูปภาพ
+                                </button>
+                            </div>
+                            
+                            <!-- หมายเหตุ -->
+                            <div class="form-row mt-3">
+                                <div class="form-group col-md-12">
+                                    <label>หมายเหตุการดำเนินการ</label>
+                                    <textarea class="form-control" name="note"></textarea>
+                                </div>
+                            </div>
+                            
+                            <!-- ผู้บันทึก -->
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>ผู้บันทึก *</label>
+                                    <input type="text" class="form-control" name="Sign" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary">บันทึกข้อมูล</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        document.getElementById('typeSelect').addEventListener('change', function() {
+        let repairButton = document.getElementById('repairButtonContainer');
+        if (this.value === 'ซ่อมแซม') {
+            repairButton.style.display = 'block';
+        } else {
+            repairButton.style.display = 'none';
+        }
+    });
+
+    const API_URL = "https://script.google.com/macros/s/AKfycbz6FJmrYXJNwTKlJqYuq7QaeyBSsvQ8_aQ_DAaB4YPV-fFQ6afyDzvSBTWc_EiSE72E9Q/exec";
+    let dataTable;
+    let auditUploader;
+    let updateUploader;
+
+
+
+
+    // Image Uploader Class
+    class ImageUploader {
+        constructor(containerId, buttonId, maxImages = 4) {
+            this.container = document.getElementById(containerId);
+            this.addButton = document.getElementById(buttonId);
+            this.maxImages = maxImages;
+            this.currentImages = 0;
+            this.images = new Map();
+            
+            this.init();
+        }
+
+        init() {
+            this.addButton.addEventListener('click', () => this.createImageInput());
+        }
+
+        createImageInput() {
+            if (this.currentImages >= this.maxImages) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'ไม่สามารถเพิ่มรูปได้',
+                    text: 'คุณสามารถอัพโหลดได้สูงสุด 4 รูปเท่านั้น'
+                });
+                return;
+            }
+
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.style.display = 'none';
+            input.addEventListener('change', (e) => this.handleImageSelect(e));
+            input.click();
+        }
+
+        async handleImageSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'ไฟล์ไม่ถูกต้อง',
+                    text: 'กรุณาเลือกไฟล์รูปภาพเท่านั้น'
+                });
+                return;
+            }
+
+            try {
+                const resizedImage = await this.resizeImage(file);
+                const imageId = Date.now().toString();
+                this.addImagePreview(imageId, resizedImage);
+                this.images.set(imageId, resizedImage);
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด',
+                    text: 'ไม่สามารถประมวลผลรูปภาพได้'
+                });
+            }
+        }
+
+        addImagePreview(imageId, blob) {
+            const div = document.createElement('div');
+            div.className = 'relative m-2';
+            
+            const imageUrl = URL.createObjectURL(blob);
+            
+            div.innerHTML = `
+                <img src="${imageUrl}" class="w-32 h-32 object-cover rounded-lg shadow-md">
+                <button type="button" data-image-id="${imageId}"
+                    class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600">
+                    ×
+                </button>
+            `;
+            
+            div.querySelector('button').addEventListener('click', () => this.removeImage(imageId, div));
+            
+            this.container.appendChild(div);
+            this.currentImages++;
+            this.updateCounter();
+        }
+        
+        removeImage(imageId, element) {
+            this.images.delete(imageId);
+            element.remove();
+            this.currentImages--;
+            this.updateCounter();
+        }
+        
+        updateCounter() {
+            this.addButton.disabled = this.currentImages >= this.maxImages;
+            if (this.currentImages >= this.maxImages) {
+                this.addButton.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                this.addButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+        
+        async resizeImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        const maxSize = 800;
+                        
+                        if (width > height) {
+                            if (width > maxSize) {
+                                height *= maxSize / width;
+                                width = maxSize;
+                            }
+                        } else {
+                            if (height > maxSize) {
+                                width *= maxSize / height;
+                                height = maxSize;
+                            }
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        canvas.toBlob((blob) => {
+                            resolve(blob);
+                        }, 'image/jpeg', 0.7);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        getAllImages() {
+            return Array.from(this.images.values());
+        }
+
+        clear() {
+            this.images.clear();
+            this.container.innerHTML = '';
+            this.currentImages = 0;
+            this.updateCounter();
+        }
+    }
+
+
+// Initialize on document ready
+$(document).ready(function() {
+    // Create image uploaders
+    auditUploader = new ImageUploader('image-preview-container', 'add-image');
+    updateUploader = new ImageUploader('update-image-preview', 'add-update-image');
+
+
+        // Initialize DataTable
+        dataTable = $('#data-table').DataTable({
+preDrawCallback: function() {
+        Swal.fire({
+            title: 'กำลังโหลดข้อมูล',
+            text: 'กรุณารอสักครู่...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+    },
+            responsive: true,
+            ajax: {
+                url: API_URL,
+                data: { action: "read", table: "5s_audit" },
+                dataSrc: 'data'
+            },
+            columns: [
+                { 
+                    data: null,
+                    render: function(data) {
+                        return createImageGallery(data);
+                    }
+                },
+                {
+    data: "Status",
+    render: function(data) {
+        return `<span class="badge badge-${getStatusBadgeClass(data)}">${data}</span>`;
+    }
+},
+                { data: "Area" },
+                { data: "Title" },
+                { data: "Type" },
+                {
+    data: "urgency",
+    render: function(data) {
+        let badgeClass = (data === 'urgent') ? 'badge-danger' : 'badge-secondary';
+        return `<span class="badge ${badgeClass}">${data}</span>`;
+    }
+},
+                { 
+                    data: "Date",
+                    render: function(data) {
+                        return new Date(data).toLocaleDateString('th-TH');
+                    }
+                },
+                {
+    data: null,
+    render: function(data) {
+        let buttons = '';
+        
+        if (!data.refer_5s_improve) {
+            buttons += `<button class="btn btn-sm btn-primary improve-btn" data-id="${data.id_5s_audit}">ผู้รับผิดชอบ</button>`;
+        } else if (data.Status === 'In Progress') {
+            buttons += `<button class="btn btn-sm btn-info update-btn" data-id="${data.refer_5s_improve}" data-audit="${data.id_5s_audit}">ส่งงาน</button>`;
+        } else if (data.Status === 'Checker') {
+            buttons += `<button class="btn btn-sm btn-warning check-btn" data-improve="${data.refer_5s_improve}" data-audit="${data.id_5s_audit}">ตรวจงาน</button>`;
+        }
+        
+        return buttons;
+    }
+}
+            ],
+            order: [[6, 'desc']],
+            language: {
+                search: "ค้นหา:",
+                lengthMenu: "แสดง _MENU_ รายการ",
+                info: "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
+                paginate: {
+                    first: "หน้าแรก",
+                    last: "หน้าสุดท้าย",
+                    next: "ถัดไป",
+                    previous: "ก่อนหน้า"
+                }
+            },
+            drawCallback: function() {
+              Swal.close(); // ปิด loading
+                bindButtonHandlers();
+            }
+        });
+
+        // Initial button handlers
+        $('#btn-add').click(function() {
+            auditUploader.clear();
+            $('#form-audit')[0].reset();
+            $('#modal-audit').modal('show');
+        });
+
+        // Approve/Reject button handlers
+        $('#btn-approve').click(function() {
+            handleCheckDecision('approved');
+        });
+
+        $('#btn-reject').click(function() {
+            handleCheckDecision('rejected');
+        });
+
+        // Form submit handlers
+        $('#form-audit').on('submit', async function(e) {
+            e.preventDefault();
+            await submitForm(this, 'audit', auditUploader);
+        });
+
+        $('#form-improve').on('submit', async function(e) {
+            e.preventDefault();
+            await submitForm(this, 'improve');
+        });
+
+        $('#form-update').on('submit', async function(e) {
+            e.preventDefault();
+            await handleUpdateSubmit(this, updateUploader);
+        });
+
+        // Initial binding
+        bindButtonHandlers();
+    });
+
+    // Improve button handler
+    function bindButtonHandlers() {
+    $('.improve-btn').off('click').on('click', async function() {
+        const id = $(this).data('id');
+        $('#refer_5s_audit').val(id);
+        $('#form-improve')[0].reset();
+
+        try {
+// Show loading message
+        Swal.fire({
+            title: 'กำลังโหลดข้อมูล',
+            text: 'กรุณารอสักครู่...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+            // ดึงข้อมูลจาก 5s_audit
+            const response = await $.ajax({
+                url: API_URL,
+                data: {
+                    action: 'read_single',
+                    table: '5s_audit',
+                    id_5s_audit: id
+                }
+            });
+
+            if (!response.success) {
+                throw new Error(response.error || 'ไม่สามารถดึงข้อมูลได้');
+            }
+
+            const data = response.data;
+
+            // แสดงข้อมูลในตาราง
+            $('#improve-area').text(data.Area || '-');
+            $('#improve-type').text(data.Type || '-');
+            $('#improve-title').text(data.Title || '-');
+            $('#improve-description').text(data.Improve || '-');
+            $('#improve-urgency').html(`<span class="badge badge-${data.urgency === 'urgent' ? 'urgent' : 'normal'}">${data.urgency}</span>`);
+            $('#improve-reporter').text(data.Sign || '-');
+            $('#improve-date').text(data.Date ? new Date(data.Date).toLocaleDateString('th-TH') : '-');
+
+            // แสดงรูปภาพ
+            const images = [data.Picture1, data.Picture2, data.Picture3, data.Picture4].filter(url => url);
+            displayImagesInImprove('improve-images', images);
+
+// Close loading and show modal
+        Swal.close();
+            $('#modal-improve').modal('show');
+        } catch (error) {
+            console.error('Error in improve button handler:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: error.message || 'ไม่สามารถดึงข้อมูลได้'
+            });
+        }
+    });
+
+         // Update button handler
+$('.update-btn').off('click').on('click', async function() {
+    try {
+        // Show loading message
+        Swal.fire({
+            title: 'กำลังโหลดข้อมูล',
+            text: 'กรุณารอสักครู่...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        const improveId = $(this).data('id');
+        const auditId = $(this).data('audit');
+        
+        if (!improveId || !auditId) {
+            throw new Error('ไม่พบข้อมูลที่ต้องการอัพเดท');
+        }
+
+        // กำหนดค่า ID ให้กับ input hidden
+        $('#update_refer_5s_audit').val(auditId);
+        $('#update_refer_5s_improve').val(improveId);
+        
+        // รีเซ็ตฟอร์มและ image uploader
+        $('#form-update')[0].reset();
+        updateUploader.clear();
+
+        // ดึงข้อมูลจากทั้งสองตาราง
+        const [auditResponse, improveResponse] = await Promise.all([
+            $.ajax({
+                url: API_URL,
+                data: { 
+                    action: 'read_single', 
+                    table: '5s_audit',
+                    id_5s_audit: auditId 
+                }
+            }),
+            $.ajax({
+                url: API_URL,
+                data: { 
+                    action: 'read_single', 
+                    table: '5s_improve',
+                    id_5s_improve: improveId 
+                }
+            })
+        ]);
+
+        if (!auditResponse.success || !improveResponse.success) {
+            throw new Error('ไม่สามารถดึงข้อมูลได้');
+        }
+
+        const auditData = auditResponse.data;
+        const improveData = improveResponse.data;
+
+        // แสดงข้อมูลการแจ้ง
+        $('#update-area').text(auditData.Area || '-');
+        $('#update-type').text(auditData.Type || '-');
+        $('#update-title').text(auditData.Title || '-');
+        $('#update-improve').text(auditData.Improve || '-');
+        $('#update-urgency').html(`<span class="badge badge-${auditData.urgency === 'urgent' ? 'urgent' : 'normal'}">${auditData.urgency}</span>`);
+        $('#update-reporter').text(auditData.Sign || '-');
+        $('#update-date').text(auditData.Date ? new Date(auditData.Date).toLocaleDateString('th-TH') : '-');
+
+        // แสดงข้อมูลการดำเนินการ
+        $('#update-responsible').text(improveData.responsible || '-');
+        $('#update-due-date').text(improveData.Due_date ? new Date(improveData.Due_date).toLocaleDateString('th-TH') : '-');
+
+        // แสดงรูปภาพที่แจ้ง
+        const notifyImages = [auditData.Picture1, auditData.Picture2, auditData.Picture3, auditData.Picture4].filter(url => url);
+        displayImagesInUpdate('update-notify-images', notifyImages);
+        
+        // Close loading and show modal
+        Swal.close();
+        $('#modal-update').modal('show');
+        
+    } catch (error) {
+        console.error('Error in update button handler:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด',
+            text: error.message || 'ไม่สามารถเปิดฟอร์มอัพเดทได้'
+        });
+    }
+});
+      
+        // Check button handler
+        $('.check-btn').off('click').on('click', async function() {
+            const auditId = $(this).data('audit');
+            const improveId = $(this).data('improve');
+            
+            try {
+                Swal.fire({
+                    title: 'กำลังโหลดข้อมูล',
+                    text: 'กรุณารอสักครู่...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                const [auditResponse, improveResponse] = await Promise.all([
+                    $.ajax({
+                        url: API_URL,
+                        data: { 
+                            action: 'read_single', 
+                            table: '5s_audit',
+                            id_5s_audit: auditId 
+                        }
+                    }),
+                    $.ajax({
+                        url: API_URL,
+                        data: { 
+                            action: 'read_single', 
+                            table: '5s_improve',
+                            id_5s_improve: improveId 
+                        }
+                    })
+                ]);
+
+                if (!auditResponse.success || !improveResponse.success) {
+                    throw new Error(auditResponse.error || improveResponse.error || 'ไม่สามารถดึงข้อมูลได้');
+                }
+
+                const audit = auditResponse.data;
+                const improve = improveResponse.data;
+
+                $('#modal-check')
+                    .data('audit-id', auditId)
+                    .data('improve-id', improveId);
+
+                $('#check-area').text(audit.Area || '');
+                $('#check-type').text(audit.Type || '');
+                $('#check-title').text(audit.Title || '');
+                $('#check-improve').text(audit.Improve || '');
+                $('#check-urgency').text(audit.urgency || '');
+                $('#check-reporter').text(audit.Sign || '');
+                $('#check-date').text(audit.Date ? new Date(audit.Date).toLocaleDateString('th-TH') : '');
+                
+                $('#check-responsible').text(improve.responsible || '');
+                $('#check-due-date').text(improve.Due_date ? new Date(improve.Due_date).toLocaleDateString('th-TH') : '');
+                $('#check-note').text(improve.note || '');
+
+                const beforeImages = [audit.Picture1, audit.Picture2, audit.Picture3, audit.Picture4].filter(url => url);
+                const afterImages = [improve.Picture1, improve.Picture2, improve.Picture3, improve.Picture4].filter(url => url);
+                
+                displayImagesInCheck('check-before-images', beforeImages);
+                displayImagesInCheck('check-after-images', afterImages);
+
+                Swal.close();
+                $('#modal-check').modal('show');
+                
+            } catch (error) {
+                console.error('Error in check button handler:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด',
+                    text: error.message || 'ไม่สามารถดึงข้อมูลได้'
+                });
+            }
+        });
+    }
+
+    // Helper Functions
+    function displayImagesInCheck(containerId, images) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        
+        images.filter(url => url).forEach(url => {
+            const imgDiv = document.createElement('div');
+            imgDiv.className = 'p-1';
+            imgDiv.innerHTML = `
+                <img src="${url}" class="img-fluid" style="max-height: 200px; border: 1px solid #ddd; border-radius: 4px;">
+            `;
+            container.appendChild(imgDiv);
+        });
+    }
+
+    async function handleCheckDecision(decision) {
+        try {
+            const auditId = $('#modal-check').data('audit-id');
+            const improveId = $('#modal-check').data('improve-id');
+            
+            if (!auditId || !improveId) {
+                throw new Error('ข้อมูลไม่ครบถ้วน');
+            }
+Swal.fire({
+                title: 'กำลังบันทึกข้อมูล',
+                text: 'กรุณารอสักครู่...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            const response = await $.ajax({
+                url: API_URL,
+                type: 'POST',
+                data: {
+                    action: 'check_decision',
+                    table: '5s_improve',
+                    id_5s_improve: improveId,
+                    id_5s_audit: auditId,
+                    approval: decision === 'approved' ? 'approval' : 'rejection',
+                    Comple_date: new Date().toISOString()
+                }
+            });
+
+            if (response.success) {
+                $('#modal-check').modal('hide');
+                
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'สำเร็จ',
+                    text: `${decision === 'approved' ? 'อนุมัติ' : 'ไม่อนุมัติ'}รายการเรียบร้อยแล้ว`,
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+
+                dataTable.ajax.reload();
+            } else {
+                throw new Error(response.error || 'ไม่สามารถบันทึกผลการตรวจสอบได้');
+            }
+        } catch (error) {
+            console.error('Error in handleCheckDecision:', error);
+            await Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: error.message || 'ไม่สามารถบันทึกผลการตรวจสอบได้'
+            });
+        }
+    }
+
+    async function handleUpdateSubmit(form, imageUploader) {
+    try {
+        // แสดง loading
+        Swal.fire({
+            title: 'กำลังบันทึกข้อมูล',
+            text: 'กรุณารอสักครู่...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // เก็บข้อมูลจากฟอร์ม
+        const formData = new FormData(form);
+        const formObject = {};
+        
+        for (const [key, value] of formData.entries()) {
+            formObject[key] = value;
+        }
+
+        // ตรวจสอบว่ามี ID ครบไหม
+        if (!formObject.refer_5s_audit || !formObject.refer_5s_improve) {
+            throw new Error('ข้อมูลไม่ครบถ้วน');
+        }
+
+        // จัดการรูปภาพ
+        const images = imageUploader.getAllImages();
+        if (images && images.length > 0) {
+            for (let i = 0; i < images.length; i++) {
+                const base64 = await fileToBase64(images[i]);
+                formObject[`Picture${i + 1}`] = base64;
+            }
+        }
+
+        // ส่งข้อมูลไปยัง API
+        const response = await $.ajax({
+            url: API_URL,
+            type: "POST",
+            data: {
+                ...formObject,
+                action: "update",
+                table: "5s_improve"
+            }
+        });
+
+        if (response.success) {
+            $('#modal-update').modal('hide');
+            await Swal.fire({
+                icon: 'success',
+                title: 'สำเร็จ',
+                text: 'บันทึกข้อมูลเรียบร้อยแล้ว',
+                showConfirmButton: false,
+                timer: 1500
+            });
+            dataTable.ajax.reload();
+        } else {
+            throw new Error(response.error || "ไม่สามารถบันทึกข้อมูลได้");
+        }
+    } catch (error) {
+        console.error('Error in handleUpdateSubmit:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด',
+            text: error.message || 'ไม่สามารถบันทึกข้อมูลได้'
+        });
+    }
+}
+
+    async function submitForm(form, type, imageUploader = null) {
+        try {
+            Swal.fire({
+                title: 'กำลังบันทึกข้อมูล',
+                text: 'กรุณารอสักครู่...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            const formData = new FormData(form);
+            const formObject = Object.fromEntries(formData.entries());
+
+            if (imageUploader) {
+                const images = imageUploader.getAllImages();
+                for (let i = 0; i < images.length; i++) {
+                    const base64 = await fileToBase64(images[i]);
+                    formObject[`Picture${i + 1}`] = base64;
+                }
+            }
+
+            formObject.action = "insert";
+            formObject.table = type === 'audit' ? "5s_audit" : "5s_improve";
+
+            const response = await $.ajax({
+                url: API_URL,
+                type: "POST",
+                data: formObject,
+                dataType: "json"
+            });
+
+            if (response.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'สำเร็จ',
+                    text: 'บันทึกข้อมูลเรียบร้อยแล้ว',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+                
+                $(`#modal-${type}`).modal('hide');
+                dataTable.ajax.reload();
+            } else {
+                throw new Error(response.error || "ไม่สามารถบันทึกข้อมูลได้");
+            }
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: error.message || 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้'
+            });
+        }
+    }
+
+    function getStatusBadgeClass(status) {
+        const classes = {
+            'New': 'primary',
+            'In Progress': 'warning',
+            'Completed': 'success',
+            'Rejected': 'danger',
+            'Checker': 'info'
+        };
+        return classes[status] || 'secondary';
+    }
+
+    // Update image gallery click handler
+function createImageGallery(data) {
+    const images = [data.Picture1, data.Picture2, data.Picture3, data.Picture4]
+        .filter(url => url);
+    
+    if (images.length === 0) return '';
+    
+    return `
+        <div class="image-gallery" onclick="showDetails('${data.id_5s_audit}')">
+            <img src="${images[0]}" class="main-thumbnail" style="width:60px; cursor:pointer">
+            ${images.length > 1 ? `<span class="image-count">+${images.length - 1}</span>` : ''}
+        </div>
+    `;
+}
+
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+// Function to show details
+async function showDetails(auditId) {
+    try {
+        Swal.fire({
+            title: 'กำลังโหลดข้อมูล',
+            text: 'กรุณารอสักครู่...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Fetch audit data
+        const auditResponse = await $.ajax({
+            url: API_URL,
+            data: { 
+                action: 'read_single', 
+                table: '5s_audit',
+                id_5s_audit: auditId 
+            }
+        });
+
+        if (!auditResponse.success) {
+            throw new Error(auditResponse.error || 'ไม่สามารถดึงข้อมูลได้');
+        }
+
+        const audit = auditResponse.data;
+
+        // Fetch improve data if exists
+        let improve = null;
+        if (audit.refer_5s_improve) {
+            const improveResponse = await $.ajax({
+                url: API_URL,
+                data: { 
+                    action: 'read_single', 
+                    table: '5s_improve',
+                    id_5s_improve: audit.refer_5s_improve 
+                }
+            });
+            
+            if (improveResponse.success) {
+                improve = improveResponse.data;
+            }
+        }
+
+        // Populate audit data
+        $('#detail-area').text(audit.Area || '-');
+        $('#detail-type').text(audit.Type || '-');
+        $('#detail-title').text(audit.Title || '-');
+        $('#detail-improve').text(audit.Improve || '-');
+        $('#detail-urgency').text(audit.urgency || '-');
+        $('#detail-reporter').text(audit.Sign || '-');
+        $('#detail-date').text(audit.Date ? new Date(audit.Date).toLocaleDateString('th-TH') : '-');
+        $('#detail-status').html(`<span class="badge badge-${getStatusBadgeClass(audit.Status)}">${audit.Status}</span>`);
+
+        // Populate improve data if exists
+        $('#detail-responsible').text(improve?.responsible || '-');
+        $('#detail-due-date').text(improve?.Due_date ? new Date(improve.Due_date).toLocaleDateString('th-TH') : '-');
+        $('#detail-note').text(improve?.note || '-');
+        $('#detail-sign').text(improve?.Sign || '-');
+        $('#detail-complete-date').text(improve?.Comple_date ? new Date(improve.Comple_date).toLocaleDateString('th-TH') : '-');
+
+        // Display images
+        const beforeImages = [audit.Picture1, audit.Picture2, audit.Picture3, audit.Picture4].filter(url => url);
+        const afterImages = improve ? [improve.Picture1, improve.Picture2, improve.Picture3, improve.Picture4].filter(url => url) : [];
+        
+        displayImagesInDetails('detail-before-images', beforeImages);
+        displayImagesInDetails('detail-after-images', afterImages);
+
+        Swal.close();
+        $('#modal-details').modal('show');
+        
+    } catch (error) {
+        console.error('Error in showDetails:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด',
+            text: error.message || 'ไม่สามารถดึงข้อมูลได้'
+        });
+    }
+}
+
+      function displayImagesInUpdate(containerId, images) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    
+    images.forEach(url => {
+        const imgDiv = document.createElement('div');
+        imgDiv.className = 'p-1';
+        imgDiv.innerHTML = `
+            <img src="${url}" class="img-fluid" style="max-height: 200px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer" 
+                 onclick="showFullImage('${url}')">
+        `;
+        container.appendChild(imgDiv);
+    });
+}
+      
+      function displayImagesInImprove(containerId, images) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    
+    images.forEach(url => {
+        const imgDiv = document.createElement('div');
+        imgDiv.className = 'p-1';
+        imgDiv.innerHTML = `
+            <img src="${url}" class="img-fluid" style="max-height: 200px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer" 
+                 onclick="showFullImage('${url}')">
+        `;
+        container.appendChild(imgDiv);
+    });
+}
+      
+function displayImagesInDetails(containerId, images) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    
+    images.forEach(url => {
+        const imgDiv = document.createElement('div');
+        imgDiv.className = 'p-1';
+        imgDiv.innerHTML = `
+            <img src="${url}" class="img-fluid" style="max-height: 200px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer" 
+                 onclick="showFullImage('${url}')">
+        `;
+        container.appendChild(imgDiv);
+    });
+}
+
+function showFullImage(url) {
+    Swal.fire({
+        imageUrl: url,
+        imageAlt: 'Full size image',
+        width: '80%',
+        showConfirmButton: false,
+        showCloseButton: true
+    });
+}
+</script>
+</body>
+</html>

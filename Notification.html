@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แจ้งซ่อม</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet"
+      href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <link rel="stylesheet"
+      href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.dataTables.min.css">
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <style>
+body {
+    padding: 0;
+    margin: 0;
+    min-height: 100vh;
+}
+
+.container {
+    padding-top: 20px;
+}
+        .img-preview {
+            position: relative;
+            display: inline-block;
+            margin: 5px;
+        }
+        .img-preview img {
+            max-width: 150px;
+            border: 1px solid #ccc;
+        }
+        .remove-image {
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+        #loadingIndicator {
+            display: none;
+            color: blue;
+            font-weight: bold;
+        }
+        .image-gallery { 
+            position: relative; 
+            display: inline-block; 
+        }
+/* .image-count {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 2px 6px;
+    font-size: 12px;
+    border-radius: 3px;
+} */
+        .image-count {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .main-thumbnail {
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+        .main-thumbnail:hover {
+            transform: scale(1.05);
+        }
+      #otherInput {
+            display: none;
+        }
+      .header-container {
+            padding: 15px;
+        }
+        .modal-title {
+            margin: 0;
+        }
+        #modalAddLabel {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        h6.modal-title {
+            color: #dc3545;
+            font-size: 0.9em;
+        }
+        .repair-header {
+            padding: 0rem 0 2rem 0;
+            margin-bottom: 1rem;            
+            border-bottom: 1px solid #dee2e6;
+        }
+        .repair-header h2 {
+            margin: 0;
+            color: #343a40;
+            font-size: 2rem;
+            font-weight: 300;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+  </head>
+  <body>
+
+    <div class="container mt-4">
+      <div class="repair-header text-center">
+        <h2>รายการแจ้งซ่อม</h2>
+      </div>
+      <!-- ปุ่มเพิ่มข้อมูล -->
+      <div class="d-flex justify-content-end mb-2">
+        <button id="btn-add" class="btn btn-primary">เพิ่มข้อมูล</button>
+      </div>
+      <!-- ตารางแสดงผลด้วย DataTables -->
+      <div class="table-responsive">
+        <table id="data-table" class="display responsive nowrap" width="100%">
+          <thead>
+            <tr>
+              <th>#</th>              
+              <th>สถานะ</th>
+              <th>พื้นที่/อุปกรณ์</th>
+              <th>ปัญหา/สาเหตุ</th>
+              <th>ประเภท</th>
+              <th>สิ่งที่ต้องทำ</th>
+              <th>วันที่แจ้ง</th>
+              <!--                         <th>จัดการ</th> -->
+            </tr>
+          </thead>
+        </table>
+      </div>
+    </div>
+
+    <!-- Modal สำหรับเพิ่มข้อมูล -->
+    <div class="modal fade" id="modal-add" tabindex="-1" role="dialog"
+      aria-labelledby="modalAddLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document">
+        <form id="form-add" enctype="multipart/form-data">
+          <div class="modal-content">
+            <div class="modal-header">
+              <div class="header-container">
+                <h4 class="modal-title"
+                  id="modalAddLabel">บันทึกข้อมูลแจ้งซ่อม</h4>
+                <h6 class="modal-title">* จำเป็นต้องระบุ</h6>
+              </div>
+              <button type="button" class="close" data-dismiss="modal"
+                aria-label="ปิด">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <!-- ฟิลด์ข้อมูลทั่วไป -->
+              <div class="form-row">
+                <div class="form-group col-md-6">
+                  <label>*พื้นที่/อุปกรณ์</label>
+                  <input type="text" class="form-control" name="Area"
+                    placeholder="ระบุจุด เพื่อให้ช่างสามารถเข้าถึงหน้างานได้ถูกต้อง"
+                    required>
+                </div>
+                <div class="form-group col-md-6">
+    <label>ประเภทของปัญหา</label>
+    <select id="dropdown" onchange="toggleOther(); updateDropdownValue()"
+        class="form-control" name="Type">
+        <option value="">เลือกรายการ
+            เพื่อให้ทีมช่างวิเคราะห์และแก้ไขได้เร็วขึ้น
+        </option>
+        <option value="Mechanical">ปัญหาเครื่องจักร
+            (Mechanical)
+        </option>
+        <option value="Electrical">ปัญหาด้านไฟฟ้า
+            (Electrical)
+        </option>
+        <option value="Control Systems">ปัญหาระบบควบคุม
+            (Control Systems)
+        </option>
+        <option value="Facility Maintenance">ปัญหาด้านโครงสร้างหรืออาคาร
+            (Facility Maintenance)
+        </option>
+        <option value="other">อื่นๆ</option>
+    </select>
+    <input type="text" id="otherInput" class="form-control" 
+        oninput="updateDropdownValue()"
+        style="display: none;" placeholder="กรุณาระบุ">
+</div>
+                <div class="form-group col-md-6">
+                  <label>*ปัญหาที่พบหรือสาเหตุ</label>
+                  <textarea type="text" class="form-control" name="Title"
+                    rows="3"
+                    placeholder="อธิบายอาการเสียหรือปัญหาที่พบ เพื่อให้ทีมซ่อมเข้าใจได้ชัดเจน"
+                    required></textarea>
+                </div>
+                <div class="form-group col-md-6">
+                  <label>สิ่งที่ต้องการให้แก้ไข</label>
+                  <textarea type="text" class="form-control" name="Improve"
+                    rows="3"
+                    placeholder="อธิบายอาการเสียหรือปัญหาที่พบ เพื่อให้ทีมซ่อมเข้าใจได้ชัดเจน"></textarea>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group col-md-6">
+                  <label>*ชื่อผู้แจ้ง</label>
+                  <input type="text" class="form-control" name="Sign" required>
+                </div>
+              </div>
+              <!-- ส่วนอัปโหลดรูป -->
+              <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">รูปภาพ
+                  (สูงสุด 4 รูป)</label>
+                <button type="button" id="addImageBtn"
+                  class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-2">
+                  เพิ่มรูปภาพ
+                </button>
+                <div id="imageContainer"
+                  class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                  <!-- รูปภาพจะถูกเพิ่มที่นี่ -->
+                </div>
+                <div id="imageCounter" class="text-sm text-gray-600 mt-2">
+                  เพิ่มรูปได้อีก 4 รูป
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary"
+                data-dismiss="modal">ยกเลิก</button>
+              <button type="submit"
+                class="btn btn-primary">บันทึกข้อมูล</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script
+      src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script
+      src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+function toggleOther() {
+        const dropdown = document.getElementById('dropdown');
+        const otherInput = document.getElementById('otherInput');
+        if (dropdown.value === 'other') {
+            otherInput.style.display = 'block';
+        } else {
+            otherInput.style.display = 'none';
+            otherInput.value = '';
+        }
+    }
+
+    function updateDropdownValue() {
+        const dropdown = document.getElementById('dropdown');
+        const otherInput = document.getElementById('otherInput');
+        if (dropdown.value === 'other') {
+            dropdown.setAttribute('name', ''); // Remove the old name
+            otherInput.setAttribute('name', 'Type'); // Set input to `Type`
+        } else {
+            dropdown.setAttribute('name', 'Type');
+            otherInput.removeAttribute('name');
+        }
+    }
+        // กำหนด URL ของ API
+        const API_URL = "https://script.google.com/macros/s/AKfycbxg12eDuVpjeQo5Xwu9ctZRIAOwwhpqEHJQzA8ZPsKAFTgKKwyH3wos4n7RgE_PfzlZ/exec";
+        
+        // ตัวแปร Global
+        let dataTable;
+        const maxImages = 4;
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        const maxFileSize = 10 * 1024 * 1024; // 10MB
+
+        // Class สำหรับจัดการรูปภาพ
+        class ImageUploader {
+            constructor() {
+                this.maxImages = 4;
+                this.currentImages = 0;
+                this.images = new Map();
+                
+                this.container = document.getElementById('imageContainer');
+                this.counter = document.getElementById('imageCounter');
+                this.addButton = document.getElementById('addImageBtn');
+                
+                this.init();
+            }
+            
+            init() {
+                this.addButton.addEventListener('click', () => this.createImageInput());
+                this.updateCounter();
+            }
+            
+            createImageInput() {
+                if (this.currentImages >= this.maxImages) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'ไม่สามารถเพิ่มรูปได้',
+                        text: 'คุณสามารถอัพโหลดได้สูงสุด 4 รูปเท่านั้น'
+                    });
+                    return;
+                }
+                
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.style.display = 'none';
+                input.addEventListener('change', (e) => this.handleImageSelect(e));
+                input.click();
+            }
+            
+            async handleImageSelect(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                if (!file.type.startsWith('image/')) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'ไฟล์ไม่ถูกต้อง',
+                        text: 'กรุณาเลือกไฟล์รูปภาพเท่านั้น'
+                    });
+                    return;
+                }
+                
+                try {
+                    Swal.fire({
+                        title: 'กำลังประมวลผลรูปภาพ',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
+                    const resizedImage = await this.resizeImage(file);
+                    const imageId = Date.now().toString();
+                    this.addImagePreview(imageId, resizedImage);
+                    this.images.set(imageId, resizedImage);
+                    
+                    Swal.close();
+                    
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด',
+                        text: 'ไม่สามารถประมวลผลรูปภาพได้'
+                    });
+                }
+            }
+            
+            addImagePreview(imageId, blob) {
+                const div = document.createElement('div');
+                div.className = 'relative';
+                
+                const imageUrl = URL.createObjectURL(blob);
+                
+                div.innerHTML = `
+                    <img src="${imageUrl}" class="w-full h-48 object-cover rounded-lg shadow-md">
+                    <button type="button" data-image-id="${imageId}"
+                        class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600">
+                        ×
+                    </button>
+                `;
+                
+                div.querySelector('button').addEventListener('click', () => this.removeImage(imageId, div));
+                
+                this.container.appendChild(div);
+                this.currentImages++;
+                this.updateCounter();
+            }
+            
+            removeImage(imageId, element) {
+                this.images.delete(imageId);
+                element.remove();
+                this.currentImages--;
+                this.updateCounter();
+            }
+            
+            updateCounter() {
+                this.counter.textContent = `เพิ่มรูปได้อีก ${this.maxImages - this.currentImages} รูป`;
+                this.addButton.disabled = this.currentImages >= this.maxImages;
+                
+                if (this.currentImages >= this.maxImages) {
+                    this.addButton.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    this.addButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+            
+            async resizeImage(file) {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            let width = img.width;
+                            let height = img.height;
+                            
+                            const maxSize = 800;
+                            
+                            if (width > height) {
+                                if (width > maxSize) {
+                                    height *= maxSize / width;
+                                    width = maxSize;
+                                }
+                            } else {
+                                if (height > maxSize) {
+                                    width *= maxSize / height;
+                                    height = maxSize;
+                                }
+                            }
+                            
+                            canvas.width = width;
+                            canvas.height = height;
+                            
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            
+                            canvas.toBlob((blob) => {
+                                resolve(blob);
+                            }, 'image/jpeg', 0.7);
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+            
+            getAllImages() {
+                return Array.from(this.images.values());
+            }
+        }
+
+        // เริ่มต้นเมื่อ Document พร้อม
+        $(document).ready(function() {
+            // สร้าง instance ของ ImageUploader
+            const imageUploader = new ImageUploader();
+
+           // ฟังก์ชันสร้าง URL สำหรับรูปภาพจาก Google Drive
+function getGoogleDriveImageUrl(imageUrl) {
+    if (!imageUrl) return '';
+    // ส่งคืน URL ที่ได้รับมาโดยตรง เพราะเป็น thumbnail URL อยู่แล้ว
+    return imageUrl;
+}
+
+// ฟังก์ชันสร้าง HTML สำหรับแสดงรูปภาพ
+function createImageGallery(row) {
+    const images = [row.Picture1, row.Picture2, row.Picture3, row.Picture4]
+        .filter(url => url) // กรองเฉพาะ URL ที่มีค่า
+        .map(url => url); // ไม่ต้องแปลงอะไรเพิ่มเติม เพราะเป็น URL ที่ใช้ได้แล้ว
+    
+    if (images.length === 0) return '';
+    
+    let html = `<div class="image-gallery">
+        <img 
+            src="${images[0]}" 
+            class="main-thumbnail" 
+            style="width:60px; cursor:pointer"
+            data-toggle="modal"
+            data-target="#detailModal${row.id_gs}"
+            onerror="this.onerror=null; this.src='path/to/placeholder.png';"
+        >`;
+    
+    if (images.length > 1) {
+        html += `<span class="image-count">+${images.length - 1}</span>`;
+    }
+    
+    html += '</div>';
+    
+    return html;
+}
+          
+function getStatusBadgeClass(status) {
+    switch(status) {
+        case 'New': return 'primary';
+        case 'Approve': return 'success';
+        case 'Reject': return 'danger';
+        default: return 'secondary';
+    }
+}
+          
+// DataTable initialization
+dataTable = $('#data-table').DataTable({
+  responsive: true,
+  ajax: {
+    url: API_URL,
+    data: { action: "read", table: "Notification" },
+    dataSrc: function(json) {
+      return json.success ? json.data : [];
+    }
+  },
+  columns: [
+      { data: null,render: function(data, type, row) {if (type === 'display') {const gallery = createImageGallery(row);return gallery || '';}return '';}},
+      { data: "Status",render: function(data) {return `<span class="badge badge-${getStatusBadgeClass(data)}">${data}</span>`;}},
+      { data: "Area" },
+      { data: "Title" },
+      { data: "Type" },
+      { data: "Improve" },      
+      { data: "Date",render: function(data) {return data ? new Date(data).toLocaleDateString('th-TH') : '';}}
+          ],
+  order: [[6, 'desc']],
+  language: {
+    search: "ค้นหา:",
+    lengthMenu: "แสดง _MENU_ รายการ",
+    info: "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
+    paginate: {
+      first: "หน้าแรก",
+      last: "หน้าสุดท้าย", 
+      next: "ถัดไป",
+      previous: "ก่อนหน้า"
+    }
+  }
+});
+
+// Add row click handler
+$('#data-table tbody').on('click', 'tr', function() {
+  const data = dataTable.row(this).data();
+  if (data) {
+    showDetailModal(data);
+  }
+});
+
+// Function to show detail modal
+function showDetailModal(data) {
+  const images = [data.Picture1, data.Picture2, data.Picture3, data.Picture4]
+    .filter(fileId => fileId)
+    .map(fileId => getGoogleDriveImageUrl(fileId));
+
+  const modalContent = `
+    <div class="modal fade" id="rowDetailModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">รายละเอียดการแจ้งซ่อม</h5>
+            <button type="button" class="close" data-dismiss="modal">×</button>
+          </div>
+          <div class="modal-body">
+            <div class="container-fluid">
+              <div class="row">
+                <!-- Column 1: Details -->
+                <div class="col-md-6">
+                  <table class="table table-sm">
+                    <tr>
+                      <th class="w-35">ปัญหาที่พบหรือสาเหตุ:</th>
+                      <td>${data.Title || '-'}</td>
+                    </tr>
+                    <tr>
+                      <th>พื้นที่/อุปกรณ์:</th>
+                      <td>${data.Area || '-'}</td>
+                    </tr>
+                    <tr>
+                      <th>ประเภทของปัญหา:</th>
+                      <td>${data.Type || '-'}</td>
+                    </tr>
+                    <tr>
+                      <th>สิ่งที่ต้องการให้แก้ไข:</th>
+                      <td>${data.Improve || '-'}</td>
+                    </tr>
+                    <tr>
+                      <th>วันที่แจ้ง:</th>
+                      <td>${data.Date ? new Date(data.Date).toLocaleDateString('th-TH') : '-'}</td>
+                    </tr>
+                    <tr>
+                      <th>สถานะ:</th>
+                      <td>
+                        <span class="badge badge-${getStatusBadgeClass(data.Status)}">
+                          ${data.Status}
+                        </span>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+                
+                <!-- Column 2: Images -->
+                <div class="col-md-6">
+                  <div class="image-grid">
+                    ${images.map(url => `
+                      <div class="mb-2">
+                        <img src="${url}" class="img-fluid rounded" 
+                          onerror="this.onerror=null; this.style.display='none';">
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Remove existing modal if any
+  $('#rowDetailModal').remove();
+  
+  // Add new modal to body
+  $('body').append(modalContent);
+  
+  // Show modal
+  $('#rowDetailModal').modal('show');
+}
+
+// Add CSS for the modal
+const style = document.createElement('style');
+style.textContent = `
+  .table-sm th {
+    width: 35%;
+    background-color: #f8f9fa;
+  }
+  .image-grid {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  .image-grid img {
+    width: 100%;
+    object-fit: cover;
+    margin-bottom: 10px;
+  }
+`;
+document.head.appendChild(style);
+              
+
+            // เปิด Modal เพิ่มข้อมูล
+            $("#btn-add").click(function() {
+                $("#form-add")[0].reset();
+                imageUploader.images.clear();
+                $('#imageContainer').empty();
+                imageUploader.currentImages = 0;
+                imageUploader.updateCounter();
+                $("#modal-add").modal("show");
+            });
+
+            // จัดการการ submit form
+            $('#form-add').on('submit', async function(e) {
+                e.preventDefault();
+                
+                try {
+                    Swal.fire({
+                        title: 'กำลังบันทึกข้อมูล',
+                        text: 'กรุณารอสักครู่...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    const formData = new FormData(this);
+                    const formObject = {};
+                    
+                    for (const [key, value] of formData.entries()) {
+                        formObject[key] = value;
+                    }
+                    
+                    // เพิ่มรูปภาพ
+                    const images = imageUploader.getAllImages();
+                    for (let i = 0; i < maxImages; i++) {
+                        if (images[i]) {
+                            const base64 = await fileToBase64(images[i]);
+                            formObject[`Picture${i + 1}`] = base64;
+                        }
+                    }
+                    
+                    formObject.action = "insert";
+                    formObject.table = "Notification";
+                    
+                    const response = await $.ajax({
+                        url: API_URL,
+                        type: "POST",
+                        data: formObject,
+                        dataType: "json"
+                    });
+
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'สำเร็จ',
+                            text: 'บันทึกข้อมูลเรียบร้อยแล้ว',
+                            showConfirmButton: false,
+                            timer: 1500
+                        });
+                        
+                        $("#modal-add").modal("hide");
+                        dataTable.ajax.reload();
+                    } else {
+                        throw new Error(response.error || "ไม่สามารถบันทึกข้อมูลได้");
+                    }
+                    
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาด',
+                        text: error.message || 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้'
+                    });
+                }
+            });
+
+            // จัดการการลบข้อมูล
+            $('#data-table').on('click', '.btn-delete', function() {
+                const id = $(this).data("id");
+                
+                Swal.fire({
+                    title: "ยืนยันการลบ",
+                    text: "คุณต้องการลบข้อมูลนี้หรือไม่?",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonText: "ลบ",
+                    cancelButtonText: "ยกเลิก",
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: API_URL,
+                            type: "POST",
+                            data: { 
+                                action: "delete", 
+                                table: "Notification", 
+                                id: id 
+                            },
+                            dataType: "json",
+                            success: function(response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'ลบข้อมูลสำเร็จ',
+                                        showConfirmButton: false,
+                                        timer: 1500
+                                    });
+                                    dataTable.ajax.reload();
+                                } else {
+                                    Swal.fire("ผิดพลาด", "ไม่สามารถลบข้อมูลได้", "error");
+                                }
+                            },
+                            error: function() {
+                                Swal.fire("ผิดพลาด", "ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้", "error");
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Utility function สำหรับแปลง File เป็น Base64
+            function fileToBase64(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = error => reject(error);
+                });
+            }
+        });
+    </script>
+  </body>
+</html>

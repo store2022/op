@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบแจ้งทำความสะอาด 5S</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.4/css/responsive.dataTables.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<!-- CSS files -->
+<link rel="stylesheet" href="https://cdn.datatables.net/2.2.2/css/dataTables.dataTables.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.3.3/css/searchPanes.dataTables.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/select/3.0.0/css/select.dataTables.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.2.2/css/buttons.dataTables.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/scroller/2.4.3/css/scroller.dataTables.css">
+
+  <style>
+        body {
+            padding: 0;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .container {
+            padding-top: 20px;
+        }
+
+        .img-preview {
+            position: relative;
+            display: inline-block;
+            margin: 5px;
+        }
+
+        .img-preview img {
+            max-width: 150px;
+            border: 1px solid #ccc;
+        }
+
+        .remove-image {
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+
+        .image-gallery {
+            position: relative;
+            display: inline-block;
+        }
+
+        .image-count {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .badge-urgent {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .badge-normal {
+            background-color: #28a745;
+            color: white;
+        }
+
+        /* CSS สำหรับปุ่มในคอลัมน์จัดการให้แสดงผลได้ดีบนมือถือ */
+        @media (max-width: 767px) {
+            .action-buttons {
+                min-width: 110px;
+                white-space: nowrap;
+            }
+            
+            .action-buttons button {
+                margin-bottom: 5px;
+                display: block;
+                width: 100%;
+            }
+            
+            /* ป้องกันไม่ให้มีไอคอนเปิด/ปิดซ่อนทับปุ่ม */
+            table.dataTable.dtr-inline.collapsed>tbody>tr>td.action-buttons:before,
+            table.dataTable.dtr-inline.collapsed>tbody>tr>th.action-buttons:before {
+                display: none !important;
+            }
+            
+            /* เพิ่มขนาดพื้นที่ทัชสกรีนสำหรับปุ่ม */
+            .btn-sm {
+                padding: 0.4rem 0.7rem;
+                font-size: 0.9rem;
+            }
+        }
+      /* Custom Styles for SearchPanes focused on Status, Area, Type, and Urgency */
+.dtsp-searchPane {
+    margin-bottom: 1rem;
+}
+
+.dtsp-title {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.dtsp-searchPanes {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+}
+
+.dtsp-clearAll {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.dtsp-clearAll:hover {
+    background-color: #c82333;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 767px) {
+    .dtsp-columns-4 {
+        grid-template-columns: 1fr;
+    }
+    
+    .dtsp-searchPane {
+        margin-bottom: 0.75rem;
+    }
+    
+    .dtsp-searchPanes button.btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* ปรับแต่งสีตามแต่ละหมวดหมู่ */
+/* สถานะ */
+.dtsp-searchPane:nth-child(1) .dtsp-title {
+    color: #0275d8;
+    border-bottom: 2px solid #0275d8;
+}
+
+/* พื้นที่ */
+.dtsp-searchPane:nth-child(2) .dtsp-title {
+    color: #5cb85c;
+    border-bottom: 2px solid #5cb85c;
+}
+
+/* ประเภท */
+.dtsp-searchPane:nth-child(3) .dtsp-title {
+    color: #f0ad4e;
+    border-bottom: 2px solid #f0ad4e;
+}
+
+/* ความเร่งด่วน */
+.dtsp-searchPane:nth-child(4) .dtsp-title {
+    color: #d9534f;
+    border-bottom: 2px solid #d9534f;
+}
+
+/* เพิ่มสไตล์สำหรับ badge ในตัวเลือกค้นหา */
+.dtsp-pill {
+    border-radius: 0.25rem;
+    padding: 0.2rem 0.5rem;
+}
+
+/* ปรับขนาดหน้าจอขนาดกลาง */
+@media (min-width: 768px) and (max-width: 992px) {
+    .dtsp-columns-4 {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+/* Custom Styles for SearchPanes to match your UI */
+.dtsp-searchPane {
+    margin-bottom: 1rem;
+}
+
+.dtsp-title {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.dtsp-searchPanes {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+}
+
+.dtsp-clearAll {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.dtsp-clearAll:hover {
+    background-color: #c82333;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 767px) {
+    .dtsp-columns-3 {
+        grid-template-columns: 1fr;
+    }
+    
+    .dtsp-searchPane {
+        margin-bottom: 0.75rem;
+    }
+    
+    .dtsp-searchPanes button.btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="text-center mb-4">
+            <h2>ระบบแจ้งทำความสะอาด 5S</h2>
+        </div>
+
+        <!-- ปุ่มเพิ่มข้อมูล -->
+        <div class="d-flex justify-content-end mb-2">
+            <button id="btn-add" class="btn btn-primary">เพิ่มรายการใหม่</button>
+        </div>
+
+        <!-- ตารางแสดงข้อมูล -->
+        <table id="data-table" class="display responsive nowrap" width="100%">
+            <thead>
+                <tr>
+                    <th>รูปภาพ</th>
+                    <th>สถานะ</th>
+                    <th>พื้นที่</th>
+                    <th>ปัญหา</th>
+                    <th>ประเภท</th>
+                    <th>ความเร่งด่วน</th>
+                    <th>วันที่แจ้ง</th>
+                    <th>การจัดการ</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+
+    <!-- Modal Details -->
+    <div class="modal fade" id="modal-details" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">รายละเอียด</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- ข้อมูลการแจ้ง -->
+                        <div class="col-md-6">
+                            <h6 class="border-bottom pb-2">ข้อมูลการแจ้ง</h6>
+                            <table class="table table-sm">
+                                <tr><th width="30%">พื้นที่:</th><td id="detail-area"></td></tr>
+                                <tr><th>ประเภท:</th><td id="detail-type"></td></tr>
+                                <tr><th>รายละเอียดปัญหา:</th><td id="detail-title"></td></tr>
+                                <tr><th>การปรับปรุง:</th><td id="detail-improve"></td></tr>
+                                <tr><th>ความเร่งด่วน:</th><td id="detail-urgency"></td></tr>
+                                <tr><th>ผู้แจ้ง:</th><td id="detail-reporter"></td></tr>
+                                <tr><th>วันที่แจ้ง:</th><td id="detail-date"></td></tr>
+                                <tr><th>สถานะ:</th><td id="detail-status"></td></tr>
+                            </table>
+                        </div>
+                        <!-- ข้อมูลการดำเนินการ -->
+                        <div class="col-md-6">
+                            <h6 class="border-bottom pb-2">ข้อมูลการดำเนินการ</h6>
+                            <table class="table table-sm">
+                                <tr><th width="30%">ผู้รับผิดชอบ:</th><td id="detail-responsible"></td></tr>
+                                <tr><th>กำหนดเสร็จ:</th><td id="detail-due-date"></td></tr>
+                                <tr><th>หมายเหตุ:</th><td id="detail-note"></td></tr>
+                                <tr><th>ผู้บันทึก:</th><td id="detail-sign"></td></tr>
+                                <tr><th>วันที่เสร็จ:</th><td id="detail-complete-date"></td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- รูปภาพ -->
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6 class="border-bottom pb-2">รูปก่อนดำเนินการ</h6>
+                            <div id="detail-before-images" class="d-flex flex-wrap"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="border-bottom pb-2">รูปหลังดำเนินการ</h6>
+                            <div id="detail-after-images" class="d-flex flex-wrap"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">ปิด</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal เพิ่มข้อมูล 5S Audit -->
+    <div class="modal fade" id="modal-audit" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <form id="form-audit">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">บันทึกแจ้งทำความสะอาด 5S</h5>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- ปุ่มยุบขยายแสดงพื้นที่รับผิดชอบ -->
+                        <div class="text-right">
+                            <button class="btn btn-info mt-2" type="button" data-toggle="collapse" data-target="#areaInfo" aria-expanded="false" aria-controls="areaInfo">
+                                แสดงพื้นที่รับผิดชอบ
+                            </button>
+                        </div>
+
+                        <!-- ข้อมูลพื้นที่รับผิดชอบ -->
+                        <div class="collapse mt-2" id="areaInfo">
+                            <div class="card card-body">
+                                <strong>Shift A</strong>
+                                <ul>
+                                    <li>EM and Crusher mil room</li>
+            <li>Cooling screw area</li>
+            <li>Coating room</li>
+            <li>Initiator room</li>
+            <li>Corridor</li>
+            <li>Mixtank room</li>
+            <li>Wash room</li>
+            <li>Scrubber area</li>
+            <li>AA unloading and AA tank fram B-1000, B1008</li>
+            <li>NaOH and PG unloading / NaOH and PG tank fram</li>
+            <li>Premix NaOH tank fram B-1002</li>
+            <li>Recycle unloading and Recycle tank fram B-1007</li>
+                                </ul>
+                                
+                                <strong>Shift B</strong>
+                                <ul>
+                                    <li>Band dryer and Oscillator area</li>
+            <li>Mix tank floor 2 area</li>
+            <li>Extruder area</li>
+            <li>FN-1901 and V-1940 area</li>
+            <li>Surge tank and roller mill area</li>
+            <li>Disc dryer area and flash tank</li>
+            <li>MX-1060 schugi area</li>
+            <li>Moisture reintroduction MX-1061 area</li>
+            <li>shelf วางของ floor 2</li>
+                                </ul>
+                                
+                                <strong>Shift C</strong>
+                                <ul>
+                                    <li>Polybelt and Photo initiator / X-link pump area</li>
+            <li>Platform TH-1170 , FN-1902</li>
+            <li>Dehumidifier DH-1901</li>
+            <li>Trim step platform</li>
+            <li>BH-1080 , FD-1061 , FD-1062 , PC-1064 area</li>
+            <li>FD-1060 and PC-1060 area</li>
+            <li>shelf วางของ floor 3</li>
+                                </ul>
+                                
+                                <strong>Shift D</strong>
+                                <ul>
+                                    <li>Sifter screen and BH-1001 area</li>
+            <li>BH-1060 , BH-1064 , BH-1080.1 , BH-1084 area</li>
+            <li>Vibra-D and SC-1110 area</li>
+            <li>BH-1101 , BH-1102 , BH-1111 platform</li>
+            <li>Scrap area of production</li>
+            <li>Control room & ห้องเก็บอุปกรณ์</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>พื้นที่ *</label>
+                                <input type="text" class="form-control" name="Area" list="areaList" autocomplete="off" required>
+                              <label>ผู้รับผิดชอบตาม Shift</label>
+        <input type="text" class="form-control" id="responsibleShift" name="responsibleShift" readonly>
+                            </div>                          
+                            <div class="form-group col-md-6">
+                                <label>ประเภท *</label>
+                                <select class="form-control" name="Type" id="typeSelect" required>
+                                    <option value="">เลือกประเภท</option>
+                                    <option value="ทำความสะอาด">ทำความสะอาด</option>
+                                    <option value="จัดระเบียบ">จัดระเบียบ</option>
+                                    <option value="ทาสี">ทาสี</option>
+                                    <option value="ติดป้าย">ติดป้าย</option>
+                                    <option value="ซ่อมแซม">ซ่อมแซม</option>
+                                </select>
+                                <!-- ปุ่มแจ้งซ่อม -->
+                                <div class="text-right mt-2" id="repairButtonContainer" style="display: none;">
+                                    <a href="https://store-op.glitch.me/Notification.html" target="_blank" class="btn btn-danger">แจ้งซ่อม</a>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- ส่วนอื่นๆ ที่มีอยู่เดิม -->
+                        <div class="form-row">
+                            <div class="form-group col-md-12">
+                                <label>รายละเอียดปัญหา *</label>
+                                <textarea class="form-control" name="Title" required></textarea>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-12">
+                                <label>การปรับปรุง</label>
+                                <textarea class="form-control" name="Improve"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>ความเร่งด่วน *</label>
+                                <select class="form-control" name="urgency" required>
+                                    <option value="normal">ปกติ</option>
+                                    <option value="urgent">เร่งด่วน</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>ผู้แจ้ง *</label>
+                                <input type="text" class="form-control" name="Sign" required>
+                            </div>
+                        </div>
+                        <!-- Image upload section -->
+                        <div id="image-upload-section" class="mt-3">
+                            <label>รูปภาพ (สูงสุด 4 รูป)</label>
+                            <div id="image-preview-container" class="d-flex flex-wrap"></div>
+                            <button type="button" id="add-image" class="btn btn-secondary mt-2">
+                                <i class="fas fa-plus"></i> เพิ่มรูปภาพ
+                            </button>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
+                        <button type="submit" class="btn btn-primary">บันทึก</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Improve -->
+    <div class="modal fade" id="modal-improve" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <form id="form-improve">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">ข้อมูลการดำเนินการ</h5>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+
+                    <div class="modal-body">
+                        <input type="hidden" name="refer_5s_audit" id="refer_5s_audit">
+                        
+                        <!-- ข้อมูลการแจ้ง -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h6 class="border-bottom pb-2">ข้อมูลการแจ้ง</h6>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <th width="20%">พื้นที่:</th>
+                                        <td id="improve-area"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>ประเภท:</th>
+                                        <td id="improve-type"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>รายละเอียดปัญหา:</th>
+                                        <td id="improve-title"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>การปรับปรุง:</th>
+                                        <td id="improve-description"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>ความเร่งด่วน:</th>
+                                        <td id="improve-urgency"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>ผู้แจ้ง:</th>
+                                        <td id="improve-reporter"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>วันที่แจ้ง:</th>
+                                        <td id="improve-date"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- รูปภาพที่แจ้ง -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h6 class="border-bottom pb-2">รูปภาพที่แจ้ง</h6>
+                                <div id="improve-images" class="d-flex flex-wrap"></div>
+                            </div>
+                        </div>
+
+                        <!-- ฟอร์มบันทึกการปรับปรุง -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h6 class="border-bottom pb-2">กำหนดผู้รับผิดชอบ</h6>
+                                <div class="row">
+                                    <div class="form-group col-md-6">
+                                        <label>ผู้รับผิดชอบ *</label>
+                                        <input type="text" class="form-control" name="responsible" required>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label>กำหนดเสร็จ *</label>
+                                        <input type="date" class="form-control" name="Due_date" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
+                        <button type="submit" class="btn btn-primary">บันทึก</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Check -->
+    <div class="modal fade" id="modal-check" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">ตรวจสอบงาน</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- ข้อมูลการแจ้ง -->
+                        <div class="col-md-6">
+                            <h6 class="border-bottom pb-2">ข้อมูลการแจ้ง</h6>
+                            <table class="table table-sm">
+                                <tr><th width="30%">พื้นที่:</th><td id="check-area"></td></tr>
+                                <tr><th>ประเภท:</th><td id="check-type"></td></tr>
+                                <tr><th>รายละเอียดปัญหา:</th><td id="check-title"></td></tr>
+                                <tr><th>การปรับปรุง:</th><td id="check-improve"></td></tr>
+                                <tr><th>ความเร่งด่วน:</th><td id="check-urgency"></td></tr>
+                                <tr><th>ผู้แจ้ง:</th><td id="check-reporter"></td></tr>
+                                <tr><th>วันที่แจ้ง:</th><td id="check-date"></td></tr>
+                            </table>
+                        </div>
+                        <!-- ข้อมูลการดำเนินการ -->
+                        <div class="col-md-6">
+                            <h6 class="border-bottom pb-2">ข้อมูลการดำเนินการ</h6>
+                            <table class="table table-sm">
+                                <tr><th width="30%">ผู้รับผิดชอบ:</th><td id="check-responsible"></td></tr>
+                                <tr><th>กำหนดเสร็จ:</th><td id="check-due-date"></td></tr>
+                                <tr><th>หมายเหตุ:</th><td id="check-note"></td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- รูปภาพ -->
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6 class="border-bottom pb-2">รูปก่อนดำเนินการ</h6>
+                            <div id="check-before-images" class="d-flex flex-wrap"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="border-bottom pb-2">รูปหลังดำเนินการ</h6>
+                            <div id="check-after-images" class="d-flex flex-wrap"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">ปิด</button>
+                    <button type="button" class="btn btn-danger" id="btn-reject">ไม่ผ่าน</button>
+                    <button type="button" class="btn btn-success" id="btn-approve">ผ่าน</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Update -->
+    <div class="modal fade" id="modal-update" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <form id="form-update">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">อัพเดทสถานะงาน</h5>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="refer_5s_audit" id="update_refer_5s_audit">
+                        <input type="hidden" name="refer_5s_improve" id="update_refer_5s_improve">
+
+                        <!-- ข้อมูลการแจ้ง -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h6 class="border-bottom pb-2">ข้อมูลการแจ้ง</h6>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <th width="20%">พื้นที่:</th>
+                                        <td id="update-area"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>ประเภท:</th>
+                                        <td id="update-type"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>รายละเอียดปัญหา:</th>
+                                        <td id="update-title"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>การปรับปรุง:</th>
+                                        <td id="update-improve"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>ความเร่งด่วน:</th>
+                                        <td id="update-urgency"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>ผู้แจ้ง:</th>
+                                        <td id="update-reporter"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>วันที่แจ้ง:</th>
+                                        <td id="update-date"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- ข้อมูลการดำเนินการ -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h6 class="border-bottom pb-2">ข้อมูลการดำเนินการ</h6>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <th width="20%">ผู้รับผิดชอบ:</th>
+                                        <td id="update-responsible"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>กำหนดเสร็จ:</th>
+                                        <td id="update-due-date"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- รูปภาพที่แจ้ง -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h6 class="border-bottom pb-2">รูปภาพที่แจ้ง</h6>
+                                <div id="update-notify-images" class="d-flex flex-wrap"></div>
+                            </div>
+                        </div>
+
+                        <!-- อัพเดทสถานะ -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h6 class="border-bottom pb-2">อัพเดทสถานะ</h6>
+                                
+                                <!-- ส่วนอัพโหลดรูปภาพ -->
+                                <div id="update-image-section" class="mt-3">
+                                    <label>รูปภาพหลังดำเนินการ (สูงสุด 4 รูป)</label>
+                                    <div id="update-image-preview" class="d-flex flex-wrap"></div>
+                                    <button type="button" id="add-update-image" class="btn btn-secondary mt-2">
+                                        <i class="fas fa-plus"></i> เพิ่มรูปภาพ
+                                    </button>
+                                </div>
+                                
+                                <!-- หมายเหตุ -->
+                                <div class="form-row mt-3">
+                                    <div class="form-group col-md-12">
+                                        <label>หมายเหตุการดำเนินการ</label>
+                                        <textarea class="form-control" name="note"></textarea>
+                                    </div>
+                                </div>
+                                
+                                <!-- ผู้บันทึก -->
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label>ผู้บันทึก *</label>
+                                        <input type="text" class="form-control" name="Sign" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
+                        <button type="submit" class="btn btn-primary">บันทึกข้อมูล</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+  <datalist id="areaList">
+    <!-- ตัวเลือกจะถูกเพิ่มโดย JavaScript -->
+</datalist>
+  
+  
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.4/js/dataTables.responsive.js"></script>
+  <script src="https://cdn.datatables.net/responsive/3.0.4/js/responsive.dataTables.js"></script>  
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- JavaScript files -->
+<script src="https://cdn.datatables.net/2.2.2/js/dataTables.js"></script>
+<script src="https://cdn.datatables.net/searchpanes/2.3.3/js/dataTables.searchPanes.js"></script>
+<script src="https://cdn.datatables.net/searchpanes/2.3.3/js/searchPanes.dataTables.js"></script>
+<script src="https://cdn.datatables.net/select/3.0.0/js/dataTables.select.js"></script>
+<script src="https://cdn.datatables.net/select/3.0.0/js/select.dataTables.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.2.2/js/dataTables.buttons.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.2.2/js/buttons.dataTables.js"></script>
+  <script src="https://cdn.datatables.net/scroller/2.4.3/js/dataTables.scroller.js"></script>
+<script src="https://cdn.datatables.net/scroller/2.4.3/js/scroller.dataTables.js"></script>
+<script src="script.js"></script>  
+  <!-- เพิ่มนี้ก่อนปิดแท็ก </body> หลังจาก script.js -->
+<script src="area-autocomplete.js"></script>
+ 
+
+</body>
+</html>

@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard OP</title>
+    <script src="https://static.line-scdn.net/liff/edge/versions/2.21.4/sdk.js"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <!-- MDB -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.1.0/mdb.min.css" rel="stylesheet" />
+    
+    <style>
+        /* Layout styles */
+        body {
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            z-index: 1050;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #f8f9fa;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            box-shadow: 0 2px 5px 0 rgb(0 0 0 / 5%), 0 2px 10px 0 rgb(0 0 0 / 5%);
+            padding: 20px 0;
+            z-index: 1040;
+            /* เอา transform ออกเพื่อให้แสดงตลอดเวลาในหน้าจอใหญ่ */
+        }
+
+        .main-content {
+            margin-left: 250px; /* เริ่มต้นมี margin ตามขนาด sidebar */
+            padding: 20px;
+            padding-top: 76px;
+        }
+
+        /* Sidebar menu styles */
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            padding-top: 58px;
+        }
+
+        .sidebar-menu li {
+            padding: 8px 20px;
+        }
+
+        .sidebar-menu li a {
+            color: #4f4f4f;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+            padding: 8px 12px;
+            border-radius: 5px;
+        }
+
+        .sidebar-menu li a:hover {
+            color: #1266f1;
+            background-color: #f0f0f0;
+        }
+
+        .sidebar-menu li a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-menu li.active a {
+            color: #1266f1;
+            font-weight: 600;
+            background-color: #e3f2fd;
+        }
+
+        /* ปิดการใช้งาน navbar collapse */
+        .navbar-collapse {
+            display: none !important;
+        }
+
+        /* ซ่อนปุ่ม toggle ในหน้าจอใหญ่ */
+        @media (min-width: 992px) {
+            .navbar-toggler {
+                display: none;
+            }
+        }
+
+        /* Responsive styles สำหรับมือถือ */
+        @media (max-width: 991.98px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                transition: margin-left 0.3s;
+            }
+
+            .main-content.shifted {
+                margin-left: 0; /* ไม่ต้องเลื่อนเนื้อหาในหน้าจอเล็ก */
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-body-tertiary fixed-top">
+    <div class="container-fluid">
+        <!-- Toggle button สำหรับ Sidebar (แสดงเฉพาะหน้าจอเล็ก) -->
+        <button
+            class="navbar-toggler border-0"
+            type="button"
+            aria-label="Toggle navigation"
+        >
+            <i class="fas fa-bars"></i>
+        </button>
+        <!-- Navbar brand -->
+        <a class="navbar-brand mt-2 mt-lg-0" href="#">
+            <img src="https://www.pikpng.com/pngl/b/46-467517_open-infinity-symbol-svg-file-clipart.png"
+                height="15"
+                alt="kaiadmin Logo"
+                loading="lazy"
+            />
+        </a>
+        <!-- Right elements -->
+        <div class="d-flex align-items-center">
+            
+<!--             <div class="dropdown">
+                <a
+                    data-mdb-dropdown-init
+                    class="text-reset me-3 dropdown-toggle hidden-arrow"
+                    href="#"
+                    id="navbarDropdownMenuLink"
+                    role="button"
+                    aria-expanded="false"
+                >
+                    <i class="fas fa-bell"></i>
+                    <span class="badge rounded-pill badge-notification bg-danger">1</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end"    aria-labelledby="navbarDropdownMenuLink" >
+                    <li><a class="dropdown-item" href="#">Some news</a></li>
+                    <li><a class="dropdown-item" href="#">Another news</a></li>
+                    <li><a class="dropdown-item" href="#">Something else here</a></li>
+                </ul>
+            </div> -->
+            <div class="dropdown">
+    <a data-mdb-dropdown-init class="dropdown-toggle d-flex align-items-center hidden-arrow"
+        href="#" id="navbarDropdownMenuAvatar" role="button" aria-expanded="false">
+        <img src="https://cdn.glitch.global/31143e28-7e80-4d3f-8c06-cc1aeeccc7bb/38d24f30-0176-48cd-9326-54cc678c8b66.image.png" class="rounded-circle" height="25"
+            alt="Profile Picture" loading="lazy" />
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuAvatar">
+        <li><a class="dropdown-item">LINE: <span data-user="line_display_name"></span></a></li>
+        <li><a class="dropdown-item">ชื่อผู้ใช้: <span data-user="full_name"></span></a></li>
+        <li><a class="dropdown-item">แผนก: <span data-user="dept"></span></a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="#" onclick="logout()">ออกจากระบบ</a></li>
+    </ul>
+</div>
+        </div>
+    </div>
+</nav>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <ul class="sidebar-menu">
+        <li class="active">
+            <a href="#" data-page="overview" onclick="navigateTo('overview')">
+                <i class="fas fa-home"></i>
+                <span>Overview</span>
+            </a>
+        </li>
+          <li>
+            <a href="#" data-page="dropout" onclick="navigateTo('dropout')">
+                <i class="fa fa-cubes" aria-hidden="true"></i>
+                <span>EM & Pack Out</span>
+            </a>
+        </li>
+<li>
+            <a href="#" data-page="repair-notification" onclick="navigateTo('repair-notification')">
+                <i class="fa-solid fa-screwdriver-wrench"></i>
+                <span>แจ้งซ่อม</span>
+            </a>
+        </li><li>
+            <a href="#" data-page="5sAudit" onclick="navigateTo('5sAudit')">
+                <i class="fa-solid fa-trash"></i>
+                <span>แจ้งทำ 5ส.</span>
+            </a>
+        </li>
+<li>
+            <a href="#" data-page="analytics" onclick="navigateTo('analytics')">
+                <i class="fa-solid fa-boxes-stacked"></i>
+                <span>Store OP</span>
+            </a>
+        </li>
+<li>
+            <a href="#" data-page="analytics" onclick="navigateTo('analytics')">
+                <i class="fa-solid fa-clock"></i>
+                <span>Equipment PM</span>
+            </a>
+        </li>
+<li>
+            <a href="#" data-page="analytics" onclick="navigateTo('analytics')">
+                <i class="fa-solid fa-helmet-safety"></i>
+                <span>อุปกรณ์ Safety</span>
+            </a>
+        </li>
+      <li>
+            <a href="#" data-page="analytics" onclick="navigateTo('analytics')">
+                <i class="fa-solid fa-key"></i>
+                <span>LO-LC</span>
+            </a>
+        </li>
+        <li>
+            <a href="#" data-page="analytics" onclick="navigateTo('analytics')">
+                <i class="fas fa-chart-line"></i>
+                <span>Analytics</span>
+            </a>
+        </li>
+        <li>
+            <a href="#" data-page="users" onclick="navigateTo('users')">
+                <i class="fas fa-users"></i>
+                <span>Users</span>
+            </a>
+        </li>
+        <li>
+            <a href="#" data-page="geography" onclick="navigateTo('geography')">
+                <i class="fas fa-globe"></i>
+                <span>Geography</span>
+            </a>
+        </li>
+        <li>
+            <a href="#" data-page="orders" onclick="navigateTo('orders')">
+                <i class="fas fa-shopping-bag"></i>
+                <span>Orders</span>
+            </a>
+        </li>
+        <li>
+            <a href="#" data-page="notifications" onclick="navigateTo('notifications')">
+                <i class="fas fa-bell"></i>
+                <span>Notifications</span>
+            </a>
+        </li>
+        <li>
+            <a href="#" data-page="settings" onclick="navigateTo('settings')">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+<!-- Main content -->
+<div class="main-content">
+    <h2>Dashboard OP</h2>
+    <p>Welcome <span data-user="line_display_name"></span></p>
+    <p>กดที่ปุ่มเมนู ☰ ซ้ายมือ หรือเลือกรายการเมนูเพื่อทำรายการที่ต้องการ </p>
+</div>
+
+<!-- MDB JavaScript -->
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/7.1.0/mdb.umd.min.js"></script>
+
+<!-- Custom JavaScript for mobile sidebar toggle -->
+<script>
+// เปิด/ปิดเมนูเมื่อกดปุ่ม toggler
+document.querySelector('.navbar-toggler').addEventListener('click', function() {
+    document.querySelector('.sidebar').classList.toggle('show');
+});
+
+// ปิดเมนูเมื่อคลิกที่พื้นที่ว่าง
+document.addEventListener('click', function(event) {
+    const sidebar = document.querySelector('.sidebar');
+    const navbarToggler = document.querySelector('.navbar-toggler');
+    
+    // ตรวจสอบว่าคลิกนอก sidebar และไม่ได้คลิกที่ปุ่ม toggler
+    if (!sidebar.contains(event.target) && !navbarToggler.contains(event.target)) {
+        sidebar.classList.remove('show');
+    }
+});
+
+
+// Initialize LIFF
+async function initializeLIFF(liffId) {
+  try {
+    await liff.init({ liffId });
+    // Check if user is logged in
+    if (!liff.isLoggedIn()) {
+      liff.login();
+    } else {
+      handleUserAuthentication();
+    }
+  } catch (err) {
+    console.error('LIFF Initialization failed', err);
+    showError('LIFF の初期化に失敗しました');
+  }
+}
+
+// Handle user authentication
+async function handleUserAuthentication() {
+  try {
+    // Get LIFF profile
+    const profile = await liff.getProfile();
+    // Check if user exists
+    checkUserExists(profile);
+  } catch (err) {
+    console.error('Authentication failed', err);
+    showError('認証に失敗しました');
+  }
+}
+
+// Check if user exists in Google Sheets
+function checkUserExists(profile) {
+  const API_URL = 'https://script.google.com/macros/s/AKfycbx2y-FY8VEyZrlne9DDBzShsxU0vCoqqi9r-iyp3z8x3RmxEuUbJF3IluI7LVGSLos0/exec';
+  
+  fetch(`${API_URL}?userId=${profile.userId}&callback=handleUserData`)
+    .then(response => response.text())
+    .then(text => {
+      // Remove JSONP callback wrapper
+      const json = JSON.parse(text.replace(/^handleUserData\((.*)\)$/, '$1'));
+      if (json.exists) {
+        handleExistingUser(json.data);
+      } else {
+        showRegistrationForm(profile);
+      }
+    })
+    .catch(err => {
+      console.error('Failed to check user', err);
+      showError('ユーザー確認に失敗しました');
+    });
+}
+
+// Handle existing user
+function handleExistingUser(userData) {
+  if (userData.active_status === 'Active') {
+    updateLastLogin(userData.user_id);
+    updateUIWithUserData(userData);
+    showDashboard();
+  } else {
+    showPendingApproval();
+  }
+}
+
+// Show registration form
+function showRegistrationForm(profile) {
+  Swal.fire({
+    title: 'ลงทะเบียนผู้ใช้ใหม่',
+    html: `
+      <div class="container mt-3">
+        <div class="text-center">
+          <img src="${profile.pictureUrl}" class="rounded-circle mb-3" style="width: 120px">
+          <p class="h5 mb-4">${profile.displayName}</p>
+        </div>
+        <div class="form-group mb-4">
+          <input id="fullName" class="form-control form-control-lg" placeholder="ชื่อ-นามสกุล">
+        </div>
+        <div class="form-group mb-4">
+          <input id="dept" class="form-control form-control-lg" placeholder="แผนก">
+        </div>
+      </div>
+    `,
+    confirmButtonText: 'ลงทะเบียน',
+    showCancelButton: true,
+    cancelButtonText: 'ยกเลิก',
+    width: '100%',
+    padding: '2em',
+    grow: 'fullscreen',
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    customClass: {
+      container: 'swal2-fullscreen',
+      popup: 'swal2-fullscreen-popup',
+      header: 'p-4',
+      title: 'h3 mb-4',
+      confirmButton: 'btn btn-primary btn-lg px-5',
+      cancelButton: 'btn btn-secondary btn-lg px-5'
+    },
+    preConfirm: () => {
+      const fullName = document.getElementById('fullName').value;
+      const dept = document.getElementById('dept').value;
+      if (!fullName || !dept) {
+        Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบ');
+        return false;
+      }
+      return { fullName, dept };
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      registerUser(profile, result.value);
+    }
+  });
+}
+// Register new user
+function registerUser(profile, formData) {
+  const userData = {
+    user_id: profile.userId,
+    line_display_name: profile.displayName,
+    line_picture_url: profile.pictureUrl,
+    full_name: formData.fullName,
+    dept: formData.dept
+  };
+
+  const API_URL = 'https://script.google.com/macros/s/AKfycbx2y-FY8VEyZrlne9DDBzShsxU0vCoqqi9r-iyp3z8x3RmxEuUbJF3IluI7LVGSLos0/exec';
+  
+  fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: `userId=${profile.userId}&data=${encodeURIComponent(JSON.stringify(userData))}&callback=handleRegistration`
+  })
+  .then(response => response.text())
+  .then(text => {
+    const json = JSON.parse(text.replace(/^handleRegistration\((.*)\)$/, '$1'));
+    if (json.success) {
+      showPendingApproval();
+    } else {
+      throw new Error(json.error);
+    }
+  })
+  .catch(err => {
+    console.error('Registration failed', err);
+    showError('การลงทะเบียนล้มเหลว');
+  });
+}
+
+// Update UI with user data
+function updateUIWithUserData(userData) {
+  document.querySelectorAll('[data-user]').forEach(element => {
+    const field = element.getAttribute('data-user');
+    if (userData[field]) {
+      element.textContent = userData[field];
+    }
+  });
+  
+  // Update profile picture
+  const profilePic = document.querySelector('#navbarDropdownMenuAvatar img');
+  if (profilePic && userData.line_picture_url) {
+    profilePic.src = userData.line_picture_url;
+  }
+}
+
+// Show pending approval message
+function showPendingApproval() {
+  // Hide main content
+  document.querySelector('.main-content').style.display = 'none';
+  document.querySelector('.sidebar').style.display = 'none';
+  
+  // Show pending approval message
+  const pendingApprovalElement = document.getElementById('pendingApproval');
+  if (pendingApprovalElement) {
+    pendingApprovalElement.style.display = 'block';
+  } else {
+    // Create pending approval message if it doesn't exist
+    const div = document.createElement('div');
+    div.id = 'pendingApproval';
+    div.className = 'text-center mt-4';
+    div.innerHTML = `
+      <div class="alert alert-warning">
+        <h4>รอการอนุมัติ</h4>
+        <p>บัญชีของคุณอยู่ระหว่างรอการอนุมัติจากผู้ดูแลระบบ</p>
+        <p>กรุณาติดต่อผู้ดูแลระบบเพื่อขอรับการอนุมัติ</p>
+      </div>
+    `;
+    document.body.appendChild(div);
+  }
+
+  // Hide other elements if they exist
+  const elementsToHide = ['loginStatus', 'registrationForm', 'errorContainer'];
+  elementsToHide.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.style.display = 'none';
+    }
+  });
+}
+
+// Show error message
+function showError(message) {
+  Swal.fire({
+    icon: 'error',
+    title: 'เกิดข้อผิดพลาด',
+    text: message,
+    confirmButtonText: 'ตกลง'
+  });
+}
+
+// Logout function
+function logout() {
+  if (liff.isLoggedIn()) {
+    liff.logout();
+  }
+  location.replace("index.html"); // เปลี่ยนเส้นทางไปหน้า index และป้องกันการกดย้อนกลับ
+}
+
+// Update last login
+function updateLastLogin(userId) {
+  const API_URL = 'https://script.google.com/macros/s/AKfycbx2y-FY8VEyZrlne9DDBzShsxU0vCoqqi9r-iyp3z8x3RmxEuUbJF3IluI7LVGSLos0/exec';
+  
+  fetch(API_URL, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: `userId=${userId}&data=${encodeURIComponent(JSON.stringify({
+      last_login_datetime: new Date().toISOString()
+    }))}`
+  }).catch(console.error);
+}
+
+// Show dashboard
+function showDashboard() {
+  document.querySelector('.main-content').style.display = 'block';
+  document.querySelector('.sidebar').style.display = 'block';
+  const pendingApproval = document.getElementById('pendingApproval');
+  if (pendingApproval) {
+    pendingApproval.style.display = 'none';
+  }
+}
+
+// Initialize on page load
+window.onload = () => {
+  initializeLIFF('2002964196-0Em8MgJk');
+};
+
+// กำหนดโครงสร้างสิทธิ์การเข้าถึงเมนูตามประเภทผู้ใช้
+const menuPermissions = {
+    admin: ['overview', 'analytics', 'users', 'geography', 'orders', 'notifications', 'settings','dropout','5sAudit','repair-notification'],
+    staff: ['overview', 'analytics', 'users', 'orders', 'notifications','dropout','5sAudit','repair-notification'],
+    user: ['overview', 'orders', 'notifications','dropout','5sAudit','repair-notification']
+};
+
+// ฟังก์ชันสำหรับจัดการการแสดงเมนูตามสิทธิ์
+function setupMenuVisibility(userRole) {
+    // เลือกทุกรายการเมนูใน sidebar
+    const menuItems = document.querySelectorAll('.sidebar-menu li');
+    
+    // วนลูปตรวจสอบแต่ละเมนู
+    menuItems.forEach(menuItem => {
+        const menuLink = menuItem.querySelector('a');
+        const menuPage = menuLink.getAttribute('data-page');
+        
+        // ตรวจสอบว่าผู้ใช้มีสิทธิ์เข้าถึงเมนูนี้หรือไม่
+        if (menuPermissions[userRole].includes(menuPage)) {
+            menuItem.style.display = 'block'; // แสดงเมนูถ้ามีสิทธิ์
+        } else {
+            menuItem.style.display = 'none'; // ซ่อนเมนูถ้าไม่มีสิทธิ์
+        }
+    });
+}
+
+// อัพเดทฟังก์ชัน handleExistingUser เพื่อรวมการตั้งค่าการแสดงเมนู
+function handleExistingUser(userData) {
+    if (userData.active_status === 'Active') {
+        updateLastLogin(userData.user_id);
+        updateUIWithUserData(userData);
+        // เก็บ user_role ไว้ใน localStorage
+        localStorage.setItem('userRole', userData.user_role.toLowerCase());
+        setupMenuVisibility(userData.user_role.toLowerCase());
+        showDashboard();
+    } else {
+        showPendingApproval();
+    }
+}
+
+// เพิ่มฟังก์ชันตรวจสอบสิทธิ์ก่อนนำทางไปยังหน้าต่างๆ
+function navigateTo(page) {
+    const userRole = getCurrentUserRole();
+    console.log('Current user role:', userRole); // เพิ่ม log เพื่อตรวจสอบ
+    console.log('Attempting to access page:', page); // เพิ่ม log เพื่อตรวจสอบ
+    console.log('Available permissions:', menuPermissions[userRole]); // เพิ่ม log เพื่อตรวจสอบ
+
+    if (!userRole || !menuPermissions[userRole]) {
+        console.error('Invalid user role or permissions');
+        return;
+    }
+    
+    if (menuPermissions[userRole].includes(page)) {
+        // ดำเนินการนำทางไปยังหน้าที่ต้องการ
+        updateActivePage(page);
+        loadPageContent(page);
+    } else {
+        // แสดงข้อความแจ้งเตือนกรณีไม่มีสิทธิ์
+        Swal.fire({
+            icon: 'error',
+            title: 'ไม่มีสิทธิ์เข้าถึง',
+            text: 'คุณไม่มีสิทธิ์เข้าถึงเมนูนี้',
+            confirmButtonText: 'ตกลง'
+        });
+    }
+}
+
+// ฟังก์ชันดึงข้อมูล role ของผู้ใช้งานปัจจุบัน
+function getCurrentUserRole() {
+    const role = localStorage.getItem('userRole');
+    // ตรวจสอบว่ามี role ใน localStorage หรือไม่
+    if (!role) {
+        console.error('User role not found in localStorage');
+        return 'user';
+    }
+    return role;
+}
+
+// ฟังก์ชันอัพเดทหน้าที่กำลังแสดงอยู่
+function updateActivePage(page) {
+    // ลบ class active จากทุกเมนู
+    document.querySelectorAll('.sidebar-menu li').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // เพิ่ม class active ให้กับเมนูที่เลือก
+    const selectedMenu = document.querySelector(`[data-page="${page}"]`).parentElement;
+    selectedMenu.classList.add('active');
+}
+
+
+// ฟังก์ชันโหลดเนื้อหาของแต่ละหน้า
+function loadPageContent(page) {
+    const mainContent = document.querySelector('.main-content');
+    
+    // สร้างตัวแปรสำหรับชื่อหน้าโดยแปลงตัวอักษรแรกเป็นตัวใหญ่
+    const pageTitle = page.charAt(0).toUpperCase() + page.slice(1);
+    
+    // อัพเดท title ของหน้าเว็บ
+    document.title = pageTitle;
+    
+    // // อัพเดทเนื้อหาหลัก
+    // mainContent.innerHTML = `<h2>${pageTitle}</h2>
+    //                        <p>This is the ${page} page content.</p>`;
+// เคลียร์เนื้อหาเดิม
+    mainContent.innerHTML = '';
+// สร้าง iframe
+    const iframe = document.createElement('iframe');
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    iframe.style.overflow = 'hidden';
+    
+    // กำหนด src ตามหน้าที่เลือก
+    switch(page) {
+        case 'notifications':
+            iframe.src = 'Notification.html';
+            break;
+        case 'overview':
+            iframe.src = 'overview.html';
+            break;
+        case 'dropout':
+            iframe.src = 'dropout.html';
+            break;
+case 'repair-notification':
+            iframe.src = 'Notification.html';
+            break;
+case '5sAudit':
+            iframe.src = '5sAudit.html';
+            break;
+        // เพิ่มหน้าอื่นๆ ตามต้องการ
+        default:
+            mainContent.innerHTML = '<p>ไม่พบหน้าที่ต้องการ</p>';
+            return;
+    }
+
+    // จัดการความสูงของ iframe แบบ dynamic
+    iframe.onload = function() {
+        adjustIframeHeight(iframe);
+    };
+
+    // เพิ่ม iframe ลงในหน้า
+    mainContent.appendChild(iframe);
+}
+// ฟังก์ชันปรับความสูง iframe ตามเนื้อหา
+function adjustIframeHeight(iframe) {
+    try {
+        const content = iframe.contentWindow.document.body;
+        const height = content.scrollHeight;
+        iframe.style.height = height + 50 + 'px'; // เพิ่ม padding 50px
+    } catch (e) {
+        console.error('Cannot adjust iframe height:', e);
+    }
+}
+
+// เพิ่ม CSS สำหรับ main-content
+const mainContentStyles = `
+    .main-content {
+        margin-left: 250px;
+        padding: 20px;
+        padding-top: 76px;
+        height: calc(100vh - 76px);
+        overflow-y: auto;
+    }
+
+    /* สำหรับหน้าจอมือถือ */
+    @media (max-width: 991.98px) {
+        .main-content {
+            margin-left: 0;
+        }
+    }
+`;
+
+// เพิ่ม CSS ลงในหน้า
+const style = document.createElement('style');
+style.textContent = mainContentStyles;
+document.head.appendChild(style);
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
+</body>
+</html>

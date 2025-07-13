@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LIFF Profile Example</title>
+  <!-- LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/versions/2.17.1/sdk.js"></script>
+  <!-- Bootstrap CSS (เลือกใช้หรือไม่ก็ได้) -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      padding-top: 70px; /* สำหรับ fixed navbar */
+    }
+  </style>
+</head>
+<body>
+  <!-- แถบนำทาง (Navbar) -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+    <div class="container">
+      <a class="navbar-brand" href="#">My LIFF App</a>
+      <div class="ml-auto">
+        <!-- รูปโปรไฟล์ที่จะแสดงผล -->
+        <img id="navbarDropdownMenuAvatar" src="/api/placeholder/25/25" class="rounded-circle" height="40" alt="Avatar"/>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- เนื้อหาหลักของหน้าเว็บ -->
+  <div class="container">
+    <h1>ยินดีต้อนรับสู่ LIFF App</h1>
+    <p>เนื้อหาของแอปพลิเคชัน</p>
+  </div>
+  
+  <!-- JavaScript โค้ด -->
+  <script>
+    // นิยามคลาส LineAuth สำหรับจัดการ LIFF
+    class LineAuth {
+      constructor() {
+        this.LIFF_ID = '2002964196-0Em8MgJk'; // เปลี่ยนเป็น LIFF ID ที่ถูกต้องของคุณ
+        this.GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx2y-FY8VEyZrlne9DDBzShsxU0vCoqqi9r-iyp3z8x3RmxEuUbJF3IluI7LVGSLos0/exec';
+      }
+  
+      // เริ่มต้น LIFF และตรวจสอบการล็อกอิน
+      async initialize() {
+        try {
+          await liff.init({ liffId: this.LIFF_ID });
+          if (!liff.isLoggedIn()) {
+            // บันทึกหน้าปัจจุบันไว้เพื่อกลับมาทีหลัง และเริ่มการล็อกอิน
+            localStorage.setItem('lastPage', window.location.pathname);
+            liff.login();
+            return false;
+          }
+          return true;
+        } catch (error) {
+          console.error('LIFF initialization failed:', error);
+          return false;
+        }
+      }
+  
+      // ดึงข้อมูลโปรไฟล์ผู้ใช้จาก LIFF
+      async getUserProfile() {
+        try {
+          const profile = await liff.getProfile();
+          return {
+            userId: profile.userId,
+            displayName: profile.displayName,
+            pictureUrl: profile.pictureUrl,
+            email: liff.getDecodedIDToken()?.email || ''
+          };
+        } catch (error) {
+          console.error('Failed to get user profile:', error);
+          return null;
+        }
+      }
+
+      // ฟังก์ชันเพิ่มเติม เช่น checkUserRegistration, registerUser สามารถเพิ่มได้ตามต้องการ
+    }
+  
+    // รอจนกว่า DOM จะโหลดเสร็จและดำเนินการเริ่มต้น LIFF
+    window.addEventListener('DOMContentLoaded', async () => {
+      // สร้างอินสแตนซ์ของคลาส LineAuth
+      const lineAuth = new LineAuth();
+  
+      // เริ่มต้น LIFF และตรวจสอบล็อกอิน ถ้าไม่สำเร็จให้หยุดการทำงาน
+      const isInitialized = await lineAuth.initialize();
+      if (!isInitialized) {
+        return;
+      }
+  
+      // ดึงข้อมูลโปรไฟล์ผู้ใช้จาก LIFF
+      const profile = await lineAuth.getUserProfile();
+      if (profile && profile.pictureUrl) {
+        // หาองค์ประกอบที่จะแสดงรูปโปรไฟล์
+        const avatarElement = document.getElementById("navbarDropdownMenuAvatar");
+        // ถ้าองค์ประกอบเป็น <img> ให้ตั้งค่าแหล่งที่มาของรูปภาพ
+        avatarElement.src = profile.pictureUrl;
+      } else {
+        console.error("ไม่สามารถดึงรูปโปรไฟล์ได้");
+      }
+    });
+    
+
+(function() {
+
+    if (document.referrer === "" || !document.referrer.includes("store-op.glitch.me")) {
+
+        window.location.href = "https://store-op.glitch.me";
+
+    }
+
+})();
+
+  </script>
+  
+  <!-- Bootstrap JS และ dependencies (เลือกใช้หรือไม่ก็ได้) -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

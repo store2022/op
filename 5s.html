@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบติดตามงาน 5S</title>
+  <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    
+    // Mock data for the application
+    const mockIssues = [
+      {
+        id: 1,
+        title: "อุปกรณ์ชำรุดที่พื้นที่ A",
+        description: "พบอุปกรณ์ชำรุดบริเวณพื้นที่ A ทำให้เกิดความเสี่ยงในการทำงาน",
+        area: "พื้นที่ A",
+        improvement: "เปลี่ยนอุปกรณ์ใหม่",
+        urgency: "high",
+        type: "Safety",
+        status: "New",
+        date: "2025-02-27",
+        assignee: "",
+        beforeImages: [
+          "https://cdn.glitch.global/a28552e0-10b9-4632-b6cf-9b2b33079e2c/broken-equipment-1.jpg"
+        ],
+        improve: null
+      },
+      {
+        id: 2,
+        title: "พื้นลื่นบริเวณโรงอาหาร",
+        description: "พบพื้นลื่นบริเวณโรงอาหาร เนื่องจากน้ำหกและไม่มีป้ายเตือน",
+        area: "โรงอาหาร",
+        improvement: "ติดตั้งป้ายเตือนและทำความสะอาด",
+        urgency: "normal",
+        type: "Safety",
+        status: "In Progress",
+        date: "2025-02-26",
+        assignee: "Shift A",
+        beforeImages: [
+          "https://cdn.glitch.global/a28552e0-10b9-4632-b6cf-9b2b33079e2c/wet-floor-1.jpg"
+        ],
+        improve: {
+          responsible: "Shift A",
+          dueDate: "2025-03-02",
+          note: "อยู่ระหว่างการจัดหาป้ายเตือน",
+          completeDate: ""
+        }
+      },
+      {
+        id: 3,
+        title: "เครื่องใช้ไฟฟ้าไม่ถูกจัดเก็บให้เป็นระเบียบ",
+        description: "พบเครื่องใช้ไฟฟ้าไม่ถูกจัดเก็บให้เป็นระเบียบตามหลัก 5S",
+        area: "สำนักงาน",
+        improvement: "จัดเก็บอุปกรณ์ให้เป็นระเบียบตามหลัก 5S",
+        urgency: "low",
+        type: "Cleaning",
+        status: "Checker",
+        date: "2025-02-25",
+        assignee: "Shift B",
+        beforeImages: [
+          "https://cdn.glitch.global/a28552e0-10b9-4632-b6cf-9b2b33079e2c/messy-office-1.jpg"
+        ],
+        afterImages: [
+          "https://cdn.glitch.global/a28552e0-10b9-4632-b6cf-9b2b33079e2c/clean-office-1.jpg"
+        ],
+        improve: {
+          responsible: "Shift B",
+          dueDate: "2025-02-28",
+          note: "ดำเนินการเสร็จสิ้น รอตรวจสอบ",
+          completeDate: "2025-02-28"
+        }
+      },
+      {
+        id: 4,
+        title: "บำรุงรักษาเครื่องจักรตามแผน",
+        description: "ดำเนินการบำรุงรักษาเครื่องจักรตามแผนงานเดือนกุมภาพันธ์",
+        area: "ฝ่ายผลิต",
+        improvement: "บำรุงรักษาเครื่องจักรตามคู่มือ",
+        urgency: "normal",
+        type: "Maintenance",
+        status: "Completed",
+        date: "2025-02-20",
+        assignee: "Maintenance",
+        beforeImages: [
+          "https://cdn.glitch.global/a28552e0-10b9-4632-b6cf-9b2b33079e2c/machine-before-1.jpg"
+        ],
+        afterImages: [
+          "https://cdn.glitch.global/a28552e0-10b9-4632-b6cf-9b2b33079e2c/machine-after-1.jpg"
+        ],
+        improve: {
+          responsible: "Maintenance",
+          dueDate: "2025-02-25",
+          note: "บำรุงรักษาเสร็จสิ้นตามแผน",
+          completeDate: "2025-02-23",
+          approval: "หัวหน้าแผนก"
+        }
+      }
+    ];
+    
+    const IssueTracker = () => {
+      const [filter, setFilter] = useState('all');
+      const [expandedIssue, setExpandedIssue] = useState(null);
+      const [searchQuery, setSearchQuery] = useState('');
+      const [showAddForm, setShowAddForm] = useState(false);
+      const [showUpdateForm, setShowUpdateForm] = useState(false);
+      const [selectedIssue, setSelectedIssue] = useState(null);
+      const [issues, setIssues] = useState([]);
+      const [isLoading, setIsLoading] = useState(true);
+      
+      // Form state for new issue
+      const [newIssue, setNewIssue] = useState({
+        title: '',
+        description: '',
+        area: '',
+        improvement: '',
+        urgency: 'normal',
+        type: ''
+      });
+      
+      // Form state for issue update
+      const [updateData, setUpdateData] = useState({
+        responsible: '',
+        dueDate: '',
+        note: '',
+        status: ''
+      });
+      
+      // Simulated database operations for Glitch
+      const getAllIssuesFromStorage = () => {
+        return new Promise((resolve) => {
+          // Simulate network delay
+          setTimeout(() => {
+            // Try to get data from localStorage first
+            const storedIssues = localStorage.getItem('5s_issues');
+            if (storedIssues) {
+              resolve({ success: true, data: JSON.parse(storedIssues) });
+            } else {
+              // If no data in localStorage, use mock data
+              localStorage.setItem('5s_issues', JSON.stringify(mockIssues));
+              resolve({ success: true, data: mockIssues });
+            }
+          }, 800);
+        });
+      };
+      
+      const addNewIssueToStorage = (data) => {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const storedIssues = JSON.parse(localStorage.getItem('5s_issues') || '[]');
+            const newId = storedIssues.length > 0 ? Math.max(...storedIssues.map(i => i.id)) + 1 : 1;
+            
+            const newIssueData = {
+              ...data,
+              id: newId,
+              date: new Date().toISOString().split('T')[0],
+              status: 'New',
+              beforeImages: data.images || [],
+              improve: null
+            };
+            
+            const updatedIssues = [...storedIssues, newIssueData];
+            localStorage.setItem('5s_issues', JSON.stringify(updatedIssues));
+            
+            resolve({ success: true, data: newIssueData });
+          }, 500);
+        });
+      };
+      
+      const updateIssueInStorage = (id, data) => {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const storedIssues = JSON.parse(localStorage.getItem('5s_issues') || '[]');
+            const issueIndex = storedIssues.findIndex(issue => issue.id === id);
+            
+            if (issueIndex === -1) {
+              resolve({ success: false, error: 'Issue not found' });
+              return;
+            }
+            
+            const updatedIssue = { ...storedIssues[issueIndex] };
+            
+            // Update status
+            updatedIssue.status = data.status;
+            
+            // Create or update improve object
+            if (!updatedIssue.improve) {
+              updatedIssue.improve = {};
+            }
+            
+            updatedIssue.improve.responsible = data.responsible;
+            updatedIssue.improve.dueDate = data.dueDate;
+            updatedIssue.improve.note = data.note;
+            
+            if (data.status === 'Completed' && !updatedIssue.improve.completeDate) {
+              updatedIssue.improve.completeDate = new Date().toISOString().split('T')[0];
+            }
+            
+            // Add after images if provided
+            if (data.images && data.images.length > 0) {
+              updatedIssue.afterImages = data.images;
+            }
+            
+            storedIssues[issueIndex] = updatedIssue;
+            localStorage.setItem('5s_issues', JSON.stringify(storedIssues));
+            
+            resolve({ success: true, data: updatedIssue });
+          }, 500);
+        });
+      };
+      
+      // Fetch data from localStorage
+      useEffect(() => {
+        const fetchData = async () => {
+          setIsLoading(true);
+          try {
+            const response = await getAllIssuesFromStorage();
+            if (response && response.success) {
+              setIssues(response.data || []);
+            } else {
+              console.error('Error fetching data:', response ? response.error : 'No response from storage');
+              alert('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + (response ? response.error : 'ไม่ได้รับการตอบกลับจากระบบจัดเก็บข้อมูล'));
+            }
+          } catch (error) {
+            console.error('Error:', error);
+            alert('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + (error.message || error.toString()));
+          } finally {
+            setIsLoading(false);
+          }
+        };
+        
+        fetchData();
+      }, []);
+      
+      const getStatusColor = (status) => {
+        switch(status) {
+          case 'New': return 'bg-blue-100 text-blue-800';
+          case 'In Progress': return 'bg-yellow-100 text-yellow-800';
+          case 'Checker': return 'bg-purple-100 text-purple-800';
+          case 'Completed': return 'bg-green-100 text-green-800';
+          default: return 'bg-gray-100 text-gray-800';
+        }
+      };
+      
+      const getUrgencyColor = (urgency) => {
+        switch(urgency) {
+          case 'high': return 'bg-red-100 text-red-800';
+          case 'normal': return 'bg-blue-100 text-blue-800';
+          case 'low': return 'bg-green-100 text-green-800';
+          default: return 'bg-gray-100 text-gray-800';
+        }
+      };
+      
+      const getTypeColor = (type) => {
+        switch(type) {
+          case 'Safety': return 'bg-red-100 text-red-800';
+          case 'Cleaning': return 'bg-green-100 text-green-800';
+          case 'Maintenance': return 'bg-blue-100 text-blue-800';
+          default: return 'bg-gray-100 text-gray-800';
+        }
+      };
+
+      const formatDate = (dateString) => {
+        if (!dateString) return '';
+        const [datePart] = dateString.split(',');
+        return datePart;
+      };
+
+      const filteredIssues = issues
+        .filter(issue => {
+          // Filter by status
+          if (filter !== 'all' && issue.status !== filter) {
+            return false;
+          }
+          
+          // Filter by search query
+          if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            return (
+              issue.title.toLowerCase().includes(query) ||
+              (issue.description && issue.description.toLowerCase().includes(query)) ||
+              (issue.area && issue.area.toLowerCase().includes(query)) ||
+              (issue.improvement && issue.improvement.toLowerCase().includes(query)) ||
+              (issue.type && issue.type.toLowerCase().includes(query))
+            );
+          }
+          
+          return true;
+        });
+
+      const toggleExpand = (id) => {
+        if (expandedIssue === id) {
+          setExpandedIssue(null);
+        } else {
+          setExpandedIssue(id);
+        }
+      };
+      
+      const handleAddIssue = () => {
+        setShowAddForm(true);
+      };
+      
+      const handleCloseAddForm = () => {
+        setShowAddForm(false);
+        setNewIssue({
+          title: '',
+          description: '',
+          area: '',
+          improvement: '',
+          urgency: 'normal',
+          type: ''
+        });
+      };
+      
+      const handleSubmitNewIssue = async (e) => {
+        e.preventDefault();
+        
+        // Get file data as base64
+        const fileInput = document.querySelector('input[type="file"]');
+        const images = [];
+        
+        if (fileInput.files.length > 0) {
+          for (let i = 0; i < Math.min(fileInput.files.length, 4); i++) {
+            const file = fileInput.files[i];
+            const reader = new FileReader();
+            
+            await new Promise((resolve) => {
+              reader.onload = (e) => {
+                images.push(e.target.result);
+                resolve();
+              };
+              reader.readAsDataURL(file);
+            });
+          }
+        }
+        
+        try {
+          const result = await addNewIssueToStorage({
+            ...newIssue,
+            images
+          });
+          
+          if (result.success) {
+            // Refresh the data
+            const updatedData = await getAllIssuesFromStorage();
+            if (updatedData.success) {
+              setIssues(updatedData.data);
+            }
+            handleCloseAddForm();
+          } else {
+            alert('เกิดข้อผิดพลาด: ' + result.error);
+          }
+        } catch (error) {
+          console.error('Error submitting form:', error);
+          alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+        }
+      };
+      
+      const handleUpdateIssue = (issue) => {
+        setSelectedIssue(issue);
+        
+        // Initialize update form with current values
+        setUpdateData({
+          responsible: issue.improve ? issue.improve.responsible : '',
+          dueDate: issue.improve ? issue.improve.dueDate : '',
+          note: issue.improve ? issue.improve.note : '',
+          status: issue.status
+        });
+        
+        setShowUpdateForm(true);
+      };
+      
+      const handleCloseUpdateForm = () => {
+        setShowUpdateForm(false);
+        setSelectedIssue(null);
+      };
+      
+      const handleSubmitUpdate = async (e) => {
+        e.preventDefault();
+        
+        if (!selectedIssue) return;
+        
+        // Get file data as base64
+        const fileInput = document.querySelector('#update-file-input');
+        const images = [];
+        
+        if (fileInput.files.length > 0) {
+          for (let i = 0; i < Math.min(fileInput.files.length, 4); i++) {
+            const file = fileInput.files[i];
+            const reader = new FileReader();
+            
+            await new Promise((resolve) => {
+              reader.onload = (e) => {
+                images.push(e.target.result);
+                resolve();
+              };
+              reader.readAsDataURL(file);
+            });
+          }
+        }
+        
+        try {
+          const result = await updateIssueInStorage(selectedIssue.id, {
+            ...updateData,
+            images
+          });
+          
+          if (result.success) {
+            // Refresh the data
+            const updatedData = await getAllIssuesFromStorage();
+            if (updatedData.success) {
+              setIssues(updatedData.data);
+            }
+            handleCloseUpdateForm();
+          } else {
+            alert('เกิดข้อผิดพลาด: ' + result.error);
+          }
+        } catch (error) {
+          console.error('Error updating:', error);
+          alert('เกิดข้อผิดพลาดในการอัปเดตข้อมูล');
+        }
+      };
+
+      return (
+        <div className="max-w-4xl mx-auto bg-white p-4 rounded-lg shadow">
+          <h1 className="text-xl font-bold mb-4 text-center">ระบบติดตามงาน 5S</h1>
+          
+          {/* Search and Add button row */}
+          <div className="flex flex-wrap gap-2 mb-4 items-center">
+            <div className="flex-grow">
+              <input
+                type="text"
+                placeholder="ค้นหา..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            <button 
+              onClick={handleAddIssue}
+              className="bg-blue-600 text-white px-4 py-2 rounded flex items-center"
+            >
+              <span className="mr-1">+</span> เพิ่มงานใหม่
+            </button>
+          </div>
+          
+          {/* Filter buttons */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            <button 
+              onClick={() => setFilter('all')} 
+              className={`px-3 py-1 rounded-full text-sm ${filter === 'all' ? 'bg-gray-800 text-white' : 'bg-gray-200'}`}
+            >
+              ทั้งหมด ({issues.length})
+            </button>
+            <button 
+              onClick={() => setFilter('New')} 
+              className={`px-3 py-1 rounded-full text-sm ${filter === 'New' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'}`}
+            >
+              รายการใหม่ ({issues.filter(i => i.status === 'New').length})
+            </button>
+            <button 
+              onClick={() => setFilter('In Progress')} 
+              className={`px-3 py-1 rounded-full text-sm ${filter === 'In Progress' ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-800'}`}
+            >
+              กำลังดำเนินการ ({issues.filter(i => i.status === 'In Progress').length})
+            </button>
+            <button 
+              onClick={() => setFilter('Checker')} 
+              className={`px-3 py-1 rounded-full text-sm ${filter === 'Checker' ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-800'}`}
+            >
+              รอตรวจสอบ ({issues.filter(i => i.status === 'Checker').length})
+            </button>
+            <button 
+              onClick={() => setFilter('Completed')} 
+              className={`px-3 py-1 rounded-full text-sm ${filter === 'Completed' ? 'bg-green-600 text-white' : 'bg-green-100 text-green-800'}`}
+            >
+              เสร็จสิ้น ({issues.filter(i => i.status === 'Completed').length})
+            </button>
+          </div>
+          
+          {/* Loading state */}
+          {isLoading && (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-blue-600"></div>
+              <p className="mt-2 text-gray-600">กำลังโหลดข้อมูล...</p>
+            </div>
+          )}
+          
+          {/* Issue list */}
+          {!isLoading && (
+            <div className="space-y-3">
+              {filteredIssues.map(issue => (
+                <div key={issue.id} className="border rounded-lg overflow-hidden">
+                  <div 
+                    className="p-3 border-b cursor-pointer" 
+                    onClick={() => toggleExpand(issue.id)}
+                  >
+                    <div className="flex flex-wrap gap-2 justify-between items-start mb-2">
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${getStatusColor(issue.status)}`}>
+                        {issue.status === 'New' ? 'รายการใหม่' : 
+                         issue.status === 'In Progress' ? 'กำลังดำเนินการ' : 
+                         issue.status === 'Checker' ? 'รอตรวจสอบ' : 
+                         issue.status === 'Completed' ? 'เสร็จสิ้น' : issue.status}
+                      </span>
+                      <div className="flex gap-2">
+                        {issue.type && (
+                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${getTypeColor(issue.type)}`}>
+                            {issue.type}
+                          </span>
+                        )}
+                        {issue.urgency && issue.urgency !== 'normal' && (
+                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${getUrgencyColor(issue.urgency)}`}>
+                            {issue.urgency === 'high' ? 'ด่วน' : 
+                             issue.urgency === 'low' ? 'ไม่เร่งด่วน' : issue.urgency}
+                          </span>
+                        )}
+                        <span className="text-xs text-gray-500">{formatDate(issue.date)}</span>
+                      </div>
+                    </div>
+                    
+                    <h3 className="font-medium text-gray-900">{issue.title}</h3>
+                    
+                    {issue.description && (
+                      <p className="text-sm text-gray-600 mt-1">{issue.description}</p>
+                    )}
+                    
+                    <div className="flex items-center justify-end mt-2 text-xs text-blue-600">
+                      {expandedIssue === issue.id ? 'ซ่อนรายละเอียด ▲' : 'ดูรายละเอียด ▼'}
+                    </div>
+                  </div>
+                  
+                  {expandedIssue === issue.id && (
+                    <div>
+                      <div className="bg-gray-50 px-3 py-2 text-xs">
+                        <div className="flex flex-wrap gap-x-4 gap-y-1">
+                          {issue.area && (
+                            <div>
+                              <span className="font-medium text-gray-700">พื้นที่:</span> {issue.area}
+                            </div>
+                          )}
+                          {issue.improvement && (
+                            <div>
+                              <span className="font-medium text-gray-700">การแก้ไข:</span> {issue.improvement}
+                            </div>
+                          )}
+                          {issue.assignee && (
+                            <div>
+                              <span className="font-medium text-gray-700">ผู้รับผิดชอบ:</span> {issue.assignee}
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Show improvement details if available */}
+                        {issue.improve && (
+                          <div className="mt-2 pt-2 border-t">
+                            <h4 className="font-medium mb-1">รายละเอียดการดำเนินการ</h4>
+                            <div className="grid grid-cols-2 gap-y-1 gap-x-4">
+                              {issue.improve.responsible && (
+                                <div>
+                                  <span className="font-medium text-gray-700">ผู้รับผิดชอบงาน:</span> {issue.improve.responsible}
+                                </div>
+                              )}
+                              {issue.improve.dueDate && (
+                                <div>
+                                  <span className="font-medium text-gray-700">กำหนดเสร็จ:</span> {formatDate(issue.improve.dueDate)}
+                                </div>
+                              )}
+                              {issue.improve.completeDate && (
+                                <div>
+                                  <span className="font-medium text-gray-700">วันที่เสร็จ:</span> {formatDate(issue.improve.completeDate)}
+                                </div>
+                              )}
+                              {issue.improve.approval && (
+                                <div>
+                                  <span className="font-medium text-gray-700">ผู้อนุมัติ:</span> {issue.improve.approval}
+                                </div>
+                              )}
+                            </div>
+                            {issue.improve.note && (
+                              <div className="mt-1">
+                                <span className="font-medium text-gray-700">หมายเหตุ:</span> {issue.improve.note}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Update button */}
+                        <div className="mt-2 flex justify-end">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateIssue(issue);
+                            }}
+                            className="bg-blue-600 text-white px-3 py-1 rounded text-xs"
+                          >
+                            อัปเดทสถานะ
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Before images */}
+                      {issue.beforeImages && issue.beforeImages.length > 0 && (
+                        <div className="p-3 border-t">
+                          <h4 className="font-medium text-sm mb-2">รูปก่อนดำเนินการ</h4>
+                          <div className="grid grid-cols-2 gap-2">
+                            {issue.beforeImages.map((src, idx) => (
+                              <div key={`before-${idx}`} className="border rounded overflow-hidden">
+                                <img src={src} alt={`ก่อนดำเนินการ ${idx+1}`} className="w-full h-32 object-cover" />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* After images */}
+                      {issue.afterImages && issue.afterImages.length > 0 && (
+                        <div className="p-3 border-t">
+                          <h4 className="font-medium text-sm mb-2">รูปหลังดำเนินการ</h4>
+                          <div className="grid grid-cols-2 gap-2">
+                            {issue.afterImages.map((src, idx) => (
+                              <div key={`after-${idx}`} className="border rounded overflow-hidden">
+                                <img src={src} alt={`หลังดำเนินการ ${idx+1}`} className="w-full h-32 object-cover" />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* No after images yet */}
+                      {(!issue.afterImages || issue.afterImages.length === 0) && (
+                        issue.status !== 'Completed' && (
+                          <div className="p-3 border-t text-center text-sm text-gray-500">
+                            ยังไม่มีรูปภาพหลังดำเนินการ
+                          </div>
+                        )
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+              
+              {filteredIssues.length === 0 && !isLoading && (
+                <div className="text-center py-8 text-gray-500">
+                  ไม่พบรายการที่ตรงกับเงื่อนไข
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Add new issue modal */}
+          {showAddForm && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-lg max-w-md w-full max-h-screen overflow-y-auto">
+                <div className="p-4 border-b">
+                  <h2 className="text-lg font-medium">เพิ่มงานใหม่</h2>
+                </div>
+                
+                <form onSubmit={handleSubmitNewIssue} className="p-4">
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">หัวข้อ *</label>
+                    <input
+                      type="text"
+                      required
+                      value={newIssue.title}
+                      onChange={(e) => setNewIssue({...newIssue, title: e.target.value})}
+                      className="w-full p-2 border rounded"
+                    />
+                  </div>
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">รายละเอียด</label>
+                    <textarea
+                      value={newIssue.description}
+                      onChange={(e) => setNewIssue({...newIssue, description: e.target.value})}
+                      className="w-full p-2 border rounded"
+                      rows="3"
+                    ></textarea>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">พื้นที่</label>
+                      <input
+                        type="text"
+                        value={newIssue.area}
+                        onChange={(e) => setNewIssue({...newIssue, area: e.target.value})}
+                        className="w-full p-2 border rounded"
+                      />
+                    </div>
+                    
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">ประเภท</label>
+                      <select
+                        value={newIssue.type}
+                        onChange={(e) => setNewIssue({...newIssue, type: e.target.value})}
+                        className="w-full p-2 border rounded"
+                      >
+                        <option value="">-- เลือกประเภท --</option>
+                        <option value="Safety">Safety</option>
+                        <option value="Cleaning">Cleaning</option>
+                        <option value="Maintenance">Maintenance</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">การแก้ไข</label>
+                      <input
+                        type="text"
+                        value={newIssue.improvement}
+                        onChange={(e) => setNewIssue({...newIssue, improvement: e.target.value})}
+                        className="w-full p-2 border rounded"
+                      />
+                    </div>
+                    
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">ความเร่งด่วน</label>
+                      <select
+                        value={newIssue.urgency}
+                        onChange={(e) => setNewIssue({...newIssue, urgency: e.target.value})}
+                        className="w-full p-2 border rounded"
+                      >
+                        <option value="low">ไม่เร่งด่วน</option>
+                        <option value="normal">ปกติ</option>
+                        <option value="high">เร่งด่วน</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">รูปภาพ</label>
+                    <div className="border rounded p-2">
+                      <p className="text-sm text-gray-500 mb-2">อัปโหลดรูปภาพก่อนการแก้ไข (สูงสุด 4 รูป)</p>
+                      <input type="file" multiple accept="image/*" className="w-full" />
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      type="button"
+                      onClick={handleCloseAddForm}
+                      className="px-4 py-2 border rounded text-gray-600"
+                    >
+                      ยกเลิก
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded"
+                    >
+                      บันทึก
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+          
+          {/* Update issue modal */}
+          {showUpdateForm && selectedIssue && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-lg max-w-md w-full max-h-screen overflow-y-auto">
+                <div className="p-4 border-b">
+                  <h2 className="text-lg font-medium">อัปเดทสถานะงาน</h2>
+                  <p className="text-sm text-gray-600">{selectedIssue.title}</p>
+                </div>
+                
+                <form onSubmit={handleSubmitUpdate} className="p-4">
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">สถานะ</label>
+                    <select
+                      value={updateData.status}
+                      onChange={(e) => setUpdateData({...updateData, status: e.target.value})}
+                      className="w-full p-2 border rounded"
+                    >
+                      <option value="New">รายการใหม่</option>
+                      <option value="In Progress">กำลังดำเนินการ</option>
+                      <option value="Checker">รอตรวจสอบ</option>
+                      <option value="Completed">เสร็จสิ้น</option>
+                    </select>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">ผู้รับผิดชอบ</label>
+                    <select
+                      value={updateData.responsible}
+                      onChange={(e) => setUpdateData({...updateData, responsible: e.target.value})}
+                      className="w-full p-2 border rounded"
+                    >
+                      <option value="">-- เลือกผู้รับผิดชอบ --</option>
+                      <option value="Shift A">Shift A</option>
+                      <option value="Shift B">Shift B</option>
+                      <option value="Shift C">Shift C</option>
+                      <option value="Maintenance">Maintenance</option>
+                    </select>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">กำหนดเสร็จ</label>
+                    <input
+                      type="date"
+                      value={updateData.dueDate ? updateData.dueDate.split(',')[0] : ''}
+                      onChange={(e) => setUpdateData({...updateData, dueDate: e.target.value})}
+                      className="w-full p-2 border rounded"
+                    />
+                    </div>
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">หมายเหตุ</label>
+                    <textarea
+                      value={updateData.note}
+                      onChange={(e) => setUpdateData({...updateData, note: e.target.value})}
+                      className="w-full p-2 border rounded"
+                      rows="3"
+                    ></textarea>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">รูปภาพ</label>
+                    <div className="border rounded p-2">
+                      <p className="text-sm text-gray-500 mb-2">อัปโหลดรูปภาพหลังดำเนินการ (สูงสุด 4 รูป)</p>
+                      <input id="update-file-input" type="file" multiple accept="image/*" className="w-full" />
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      type="button"
+                      onClick={handleCloseUpdateForm}
+                      className="px-4 py-2 border rounded text-gray-600"
+                    >
+                      ยกเลิก
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded"
+                    >
+                      บันทึก
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    };
+    
+    // Render ตัว component
+    ReactDOM.render(<IssueTracker />, document.getElementById('root'));
+  </script>
+</body>
+</html>
