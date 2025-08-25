@@ -517,6 +517,7 @@ dataTable = $('#data-table').DataTable({
       { data: null,render: function(data, type, row) {if (type === 'display') {const gallery = createImageGallery(row);return gallery || '';}return '';}},
       { data: "Status",render: function(data) {return `<span class="badge badge-${getStatusBadgeClass(data)}">${data}</span>`;}},
       { data: "Area" },
+      { data: "Department" },
       { data: "Title" },
       { data: "Type" },
       { data: "Improve" },      
