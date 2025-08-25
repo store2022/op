@@ -21,15 +21,6 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
     <style>
-body {
-    padding: 0;
-    margin: 0;
-    min-height: 100vh;
-}
-
-.container {
-    padding-top: 20px;
-}
         .img-preview {
             position: relative;
             display: inline-block;
@@ -209,7 +200,7 @@ body {
                 </div>
               </div>
               <div class="form-row">
-                <div class="form-group col-md-6">
+  <div class="form-group col-md-6">
     <label>*แผนก</label>
     <select class="form-control" name="Department" required>
       <option value="">-- เลือกแผนก --</option>
@@ -221,11 +212,12 @@ body {
       <option value="Safty">Safty</option>
     </select>
   </div>
-                <div class="form-group col-md-6">
-                  <label>*ชื่อผู้แจ้ง</label>
-                  <input type="text" class="form-control" name="Sign" required>
-                </div>
-              </div>
+  <div class="form-group col-md-6">
+    <label>*ชื่อผู้แจ้ง</label>
+    <input type="text" class="form-control" name="Sign" required>
+  </div>
+</div>
+
               <!-- ส่วนอัปโหลดรูป -->
               <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2">รูปภาพ
@@ -288,7 +280,7 @@ function toggleOther() {
         }
     }
         // กำหนด URL ของ API
-        const API_URL = "https://script.google.com/macros/s/AKfycbxg12eDuVpjeQo5Xwu9ctZRIAOwwhpqEHJQzA8ZPsKAFTgKKwyH3wos4n7RgE_PfzlZ/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbyMqNw3rWwhsDRoarQ_n-VqPd0tlvuWV1fcwqjohQit8yk0wM3xS4IGWFMGIBNMjyr9/exec";
         
         // ตัวแปร Global
         let dataTable;
@@ -461,17 +453,17 @@ function toggleOther() {
             const imageUploader = new ImageUploader();
 
            // ฟังก์ชันสร้าง URL สำหรับรูปภาพจาก Google Drive
-function getGoogleDriveImageUrl(imageUrl) {
-    if (!imageUrl) return '';
-    // ส่งคืน URL ที่ได้รับมาโดยตรง เพราะเป็น thumbnail URL อยู่แล้ว
-    return imageUrl;
+function getGoogleDriveImageUrl(fileId) {
+    if (!fileId) return '';
+    // ใช้ Export URL แทน uc URL เพื่อหลีกเลี่ยงปัญหาการยืนยันตัวตน
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w800`;
 }
 
 // ฟังก์ชันสร้าง HTML สำหรับแสดงรูปภาพ
 function createImageGallery(row) {
     const images = [row.Picture1, row.Picture2, row.Picture3, row.Picture4]
-        .filter(url => url) // กรองเฉพาะ URL ที่มีค่า
-        .map(url => url); // ไม่ต้องแปลงอะไรเพิ่มเติม เพราะเป็น URL ที่ใช้ได้แล้ว
+        .filter(fileId => fileId)
+        .map(fileId => getGoogleDriveImageUrl(fileId));
     
     if (images.length === 0) return '';
     
@@ -489,11 +481,8 @@ function createImageGallery(row) {
         html += `<span class="image-count">+${images.length - 1}</span>`;
     }
     
-    html += '</div>';
-    
     return html;
 }
-          
 function getStatusBadgeClass(status) {
     switch(status) {
         case 'New': return 'primary';
@@ -517,7 +506,6 @@ dataTable = $('#data-table').DataTable({
       { data: null,render: function(data, type, row) {if (type === 'display') {const gallery = createImageGallery(row);return gallery || '';}return '';}},
       { data: "Status",render: function(data) {return `<span class="badge badge-${getStatusBadgeClass(data)}">${data}</span>`;}},
       { data: "Area" },
-      { data: "Department" },
       { data: "Title" },
       { data: "Type" },
       { data: "Improve" },      
