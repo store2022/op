@@ -200,6 +200,11 @@
                 </div>
               </div>
               <div class="form-row">
+<!-- เพิ่มฟิลด์วันที่คาดว่าจะซ่อมเสร็จ -->
+<div class="form-group col-md-6">
+  <label>วันที่คาดว่าจะซ่อมเสร็จ</label>
+  <input type="date" class="form-control" name="ExpectedFinishDate">
+</div>
   <div class="form-group col-md-6">
     <label>*แผนก</label>
     <select class="form-control" name="Department" required>
@@ -209,7 +214,9 @@
       <option value="TS Lab">TS Lab</option>
       <option value="QA Lab">QA Lab</option>
       <option value="RD Lab">RD Lab</option>
-      <option value="Safty">Safty</option>
+      <option value="Safety">Safety</option>
+      <option value="WH">WH</option>
+      <option value="Admin">Admin</option>
     </select>
   </div>
   <div class="form-group col-md-6">
